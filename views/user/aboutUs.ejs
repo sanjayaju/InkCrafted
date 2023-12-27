@@ -1,0 +1,313 @@
+
+<%- include('../partials/head.ejs') %>
+<%- include('../partials/userHeader.ejs') %>
+
+<%- include('../partials/userBreadcrub.ejs') %>
+
+
+    <!-- About Section Begin -->
+    <section class="about mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="about__pic">
+                        <img src="img/about/aboutpic.webp" alt="">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 col-md-4 col-sm-6">
+                    <div class="about__item">
+                        <h4>Who Are We?</h4>
+                        <p>Welcome to InkCrafted, the ultimate destination for pen enthusiasts and stationery aficionados alike. Our website boasts an exquisite collection of pens that are more than mere writing tools—they're works of art. From sleek, modern designs to vintage classics, InkCrafted curates a diverse range to cater to every taste. Each pen is meticulously crafted with precision and attention to detail, ensuring a writing experience that is as smooth as it is stylish. With a user-friendly interface and secure transactions, InkCrafted is not just a pen-selling website; it's a haven for those who appreciate the finer things in life, where every stroke tells a story.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6">
+                    <div class="about__item">
+                        <h4>What We Offer?</h4>
+                        <p>In this era of well educated world, InkCrafted redefines quality luxury pens. Our wide array of products
+                        ensures you have access to the latest trends and timeless classics, all in one place.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-6">
+                    <div class="about__item">
+                        <h4>Why Choose InkCrafted?</h4>
+                        <p>Discover the essence of selfconfidence with InkCrafted. Our selection is not just about
+                        style, but a celebration of individuality. Experience fashion that resonates with your lifestyle and handwriting.</p>
+                    </div>
+                </div>                
+            </div>
+        </div>
+    </section>
+    <!-- About Section End -->
+
+    <!-- Testimonial Section Begin -->
+    <section class="testimonial">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-6 p-0">
+                    <div class="testimonial__text">
+                        <span class="icon_quotations"></span>
+                        <p>
+                            "Elevating Every Getaway. Whether it's a spontaneous riverside retreat or a planned adventure, Gents Garage outfits redefine
+                            travel style. As I enjoy my tea by the river, I'm reminded that looking sharp isn't confined to the city. Thanks to Gents Garage, 
+                            I'm ready to explore the world with confidence, one stylish step at a time."
+                        </p>
+                        <div class="testimonial__author">
+                            <div class="testimonial__author__pic">
+                                <a href="https://instagram.com/web_wiz_ard"  target="_blank">
+                                    <img src="/images/teams/sanjay.jpg" alt="Happy Customer">
+                                </a>
+                            </div>
+                            <div class="testimonial__author__text">
+                                <a href="https://instagram.com/web_wiz_ard" target="_blank">
+                                    <h5>Sanjay</h5>
+                                    <p>Happy Customer </p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 p-0">
+                    <div class="testimonial__pic set-bg" data-setbg="img/about/thecover.jpeg"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Testimonial Section End -->
+
+    <!-- Counter Section Begin -->
+    <section class="counter mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="counter__item">
+                        <div class="counter__item__number">
+                            <h2 class="cn_num"><%= usersCount*6 %></h2>
+                        </div>
+                        <span>Our <br />Customers</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="counter__item">
+                        <div class="counter__item__number">
+                            <h2 class="cn_num"><%= categoriesCount %></h2>
+                        </div>
+                        <span>Total <br />Categories</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="counter__item">
+                        <div class="counter__item__number">
+                            <h2 class="cn_num">03</h2>
+                        </div>
+                        <span>In <br />Places</span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="counter__item">
+                        <div class="counter__item__number">
+                            <h2 class="cn_num"><%= happyCustomers %></h2>
+                            <strong>%</strong>
+                        </div>
+                        <span>Happy <br />Customer</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Counter Section End -->
+
+    <!-- Team Section Begin -->
+    <section class="team mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Our Team</span>
+                        <h2>Meet Our Team</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="team__item">
+                        <a href="https://instagram.com/niy_az__" target="_blank">
+                            <img src="/images/teams/shebi.jpg" alt="Fashion Designer">
+                            <h4>Shebin pr</h4>
+                            <span>Fashion Design</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <div class="team__item">
+                        <a href="https://instagram.com/fa_sil_v" target="_blank">
+                            <img src="/images/teams/suni.jpg" alt="Sunil K Unni CEO">
+                            <h4>Sunil k Unni</h4>
+                            <span>C.E.O</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <a href="https://instagram.com/_._z4k_._" target="_blank">
+                        <div class="team__item">
+                            <img src="/images/teams/v3.jpg" alt="Manager">
+                            <h4>Sooraj Krishnan</h4>
+                            <span>Manager</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <a href="https://instagram.com/_mashhoorkhan_" target="_blank">
+                        <div class="team__item">
+                            <img src="/images/teams/mudryk.jpg" alt="Delivery">
+                            <h4>Mykayilo mudryk</h4>
+                            <span>Delivery Partner</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Team Section End -->
+
+    <!-- Client Section Begin -->
+    <!-- <section class="clients spad">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title">
+                        <span>Partner</span>
+                        <h2>Happy Clients</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-1.png" alt="Client 1"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-2.png" alt="Client 2"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-3.png" alt="Client 3"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-4.png" alt="Client 4"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-5.png" alt="Client 5"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-6.png" alt="Client 6"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-7.png" alt="Client 7"></a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-4 col-6">
+                    <a href="#" class="client__item"><img src="img/clients/client-8.png" alt="Client 8"></a>
+                </div>
+            </div>
+        </div>
+    </section> -->
+    <!-- Client Section End -->
+
+    
+    <!-- Contact Section Begin -->
+    <section class="contact spad" id="contactUs">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 col-md-6">
+                    <div class="contact__text">
+                        <div class="section-title">
+                            <span>Information</span>
+                            <h2>Contact Us</h2>
+                            <p>As you might expect of a company that began as a high-end interiors contractor, we pay
+                                strict attention.</p>
+                        </div>
+                        <ul>
+                            <li>
+                                <h4>Sreekerishnapuram</h4>
+                                <p>Chandhpur city, Kerala, India <br />+91 7559 847 292</p>
+                            </li>
+                            <li>
+                                <h4>Calicut</h4>
+                                <p>Kozhikkode, Kerala, India <br />+91 8129 243 500</p>
+                            </li>
+                            <li>
+                                <h4>Kochi</h4>
+                                <p>Kochi, Kerala, India <br />+91 8129 243 600</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="contact__form">
+                        <form action="/contactForm" method="post" id="contactForm">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <input type="text" name="fullname" placeholder="Enter Name">
+                                </div>
+                                <div class="col-lg-12">
+                                    <input type="text" name="email" placeholder="Enter Email">
+                                </div>
+                                <div class="col-lg-12">
+                                    <input type="text" name="subject" placeholder="Enter Subject">
+                                </div>
+                                <div class="col-lg-12">
+                                    <textarea placeholder="Message" name="message"></textarea>
+                                    <button type="submit" class="site-btn">Send Message</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Contact Section End -->
+
+
+<%- include('../partials/footer.ejs') %>  
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.17/dist/sweetalert2.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.7.0.slim.js"
+    integrity="sha256-7GO+jepT9gJe9LB4XFf8snVOjX3iYNb0FHYr5LI1N5c=" crossorigin="anonymous"></script>
+
+<script>
+        $('#contactForm').submit((e) => {
+            e.preventDefault()
+            $.ajax({
+                url: '/contactForm',
+                method: 'post',
+                data: $('#contactForm').serialize(),
+                success: (res) => {
+                    if (res.status == true) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Your message has been sent!',
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // User clicked OK, refresh the page
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: 'An error occurred while processing your request.',
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                }
+            })
+        })
+</script>
+<%- include('../partials/script.ejs') %>

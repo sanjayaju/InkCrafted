@@ -695,7 +695,7 @@ const cancelOrder = async (req, res, next) => {
                         }
                     );
 
-                    console.log('pdt.status set to Cancelled');
+                    console.log('pdt.status set to Cancelled!');
                 }
             }
 

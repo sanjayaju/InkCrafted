@@ -60,17 +60,30 @@
                                 </div>
                             </div>
 
-                            <!-- New InkColor Section -->
-                            <div class="shop__sidebar__inkcolor">
-                                <h5>InkColor</h5>
-                                <div class="form-group">
-                                    <select class="form-control" id="InkColor" name="InkColor">
-                                        <option value="blue">Blue</option>
-                                        <option value="black">Black</option>
-                                    </select>
+                            <!-- InkColor Section -->
+                            <div class="card">
+                                <div class="card-heading">
+                                    <a data-toggle="collapse" data-target="#collapseInkColor">InkColor</a>
+                                </div>
+                                <div id="collapseInkColor" class="collapse show" data-parent="#accordionExample">
+                                    <div class="card-body">
+                                        <div class="shop__sidebar__inkcolor">
+                                            <ul>
+                                                <li>
+                                                    <a href="?inkColor=blue&sortValue=<%= sortValue %>" style="background-color: rgba(0, 0, 0, 0.5);color: black;"">
+                                                        Blue
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="?inkColor=black&sortValue=<%= sortValue %>" style="background-color: rgba(0, 0, 0, 0.5);color: black;"">
+                                                        Black
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
                         </div>
                     </div>
                 </div>

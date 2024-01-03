@@ -33,27 +33,28 @@
                                 </div>
                                 <div class="row input-group input-group-outline mb-3">
                                     <div class="col-md-4">
+                                        <% console.log(categories); %>
                                         <div class="form-group">
                                             <label for="category">Category</label>
-                                            <select id="category" name="category" class="form-control">
-                                                <% if(categories.length>0){ 
-                                                    for(let i=0;i<categories.length;i++){%>
-                                                    <option>
-                                                        <%= categories[i].name %>
-                                                    </option>
-                                                    <% } %>
-                                                <% }else{ %>
-                                                <option value="">No categories</option>
-                                                <% } %>
-                                            </select>
+                                         <select id="category" name="category" class="form-control">
+    <% if(categories.length>0){ 
+        for(let i=0; i<categories.length; i++){ %>
+            <option value="<%= categories[i].name %>">
+                <%= categories[i].name %>
+            </option>
+    <% }} else { %>
+        <option value="">No categories</option>
+    <% } %>
+</select>
+
                                         </div>
 
                                         <!-- Ink Color dropdown code -->
                                         <div class="form-group">
                                             <label for="InkColor">InkColor</label>
                                             <select id="InkColor" name="InkColor" class="form-control">
-                                                <option value="blue">Blue</option>
-                                                <option value="black">Black</option>
+                                                <option value="Blue">Blue</option>
+                                                <option value="Black">Black</option>
                                                 <!-- Add more color options as needed -->
                                             </select>
                                         </div>

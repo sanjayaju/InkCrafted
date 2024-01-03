@@ -55,17 +55,10 @@
                                         <td class="align-middle text-center text-sm">
                                             <span class="text-secondary text-xs font-weight-bold"><%= pdtsData[i].quantity %></span>
                                         </td>
-                                        <td class="align-middle text-center text-sm">
-                                            <% if (pdtsData[i].quantity > 0) { %>
-                                                <span class="text-secondary text-xs font-weight-bold"><%= pdtsData[i].quantity %></span>
-                                            <% } else { %>
-                                                <span class="text-danger text-xs font-weight-bold">Out of Stock</span>
-                                            <% } %>
-                                        </td>
 
                                         <td class="align-middle text-center text-sm">
                                             <p class="text-xs font-weight-bold mb-0"><%= pdtsData[i].category.name %></p>
-                                        </td>
+                                          </td>
 
                                         <td class="align-middle text-center text-sm">
                                             <span class="text-secondary text-xs font-weight-bold"><%= pdtsData[i].InkColor %></span> <!-- Add this line -->

@@ -564,7 +564,64 @@ const addMoneyToWallet = async(req, res, next) => {
       next(error)
   }
 }
+const loadWishlist = async(req, res, next) => {
+  try {
+      console.log('loading wishlist');
+      const userId = req.session.userId
+      const isLoggedIn = Boolean(req.session.userId)
+      const userData = await User.findById({_id:userId}).populate('wishlist')
+      const wishlist = userData.wishlist
+      res.render('wishlist',{page:'Wishlist', parentPage:'Shop', isLoggedIn, wishlist})
+  } catch (error) {
+      next(error)
+  }
+}
 
+const addToWishlist = async(req, res, next) => {
+  try {
+      const { productId } = req.params
+      const { userId } = req.session
+      const userData = await User.findById({_id: userId});
+      if(!userData.wishlist.includes(productId)){
+          userData.wishlist.push(productId)
+          await userData.save()
+          req.session.wishCount++
+      }
+      let { returnPage } = req.query
+      if(returnPage == 'shop'){
+          res.redirect('/shop')
+      }else if(returnPage == 'productOverview'){
+          res.redirect(`/shop/productOverview/${productId}`)
+      }
+  } catch (error) {
+      next(error)
+  }
+}
+const removeWishlistItem = async(req, res, next) => {
+  try {
+      const { productId } = req.params
+      const { userId } = req.session
+      await User.findByIdAndUpdate(
+          {_id: userId},
+          {
+              $pull:{
+                  wishlist: productId
+              }
+          }
+      );
+      req.session.wishCount--
+      const { returnPage } = req.query
+      if(returnPage == 'shop'){
+          res.redirect('/shop')
+      }else if(returnPage == 'productOverview'){
+          res.redirect(`/shop/productOverview/${productId}`)
+      }else if(returnPage == 'wishlist'){
+          res.redirect('/wishlist')
+      }
+  } catch (error) {
+      next(error)
+  }
+}
 
 
 module.exports = {
@@ -588,7 +645,10 @@ module.exports = {
   loadChangePassword,
   postChangePassword,
   loadWalletHistory,
-  addMoneyToWallet
+  addMoneyToWallet,
+  loadWishlist,
+  addToWishlist,
+  removeWishlistItem
 }
 
 

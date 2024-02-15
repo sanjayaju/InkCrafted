@@ -12,6 +12,7 @@ user_route.set('views','./views/user');
 
 user_route.use( async(req, res, next) => {
     res.locals.cartCount = req.session.cartCount
+    res.locals.wishCount = req.session.wishCount
     next()
 })
 
@@ -51,6 +52,9 @@ user_route.post('/shoppingCart/removeItem/:id',userCtrl.removeCartItem)
 user_route.put('/updateCart',userCtrl.updateCart);
 user_route.get('/shoppingCart/proceedToCheckout',orderCtrl.loadCheckout)
 user_route.post('/shoppingCart/placeOrder',orderCtrl.placeOrder)
+user_route.get('/wishlist',userCtrl.loadWishlist)
+user_route.get('/addToWishlist/:productId',userCtrl.addToWishlist)
+user_route.get('/removeWishlistItem/:productId',userCtrl.removeWishlistItem)
 
 
 

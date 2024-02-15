@@ -122,11 +122,25 @@
                                                 <a class="btn btn-dark" href="/shop/addToCart/<%= pdtsData[i]._id %>">+ Add To Cart</a>
                                             <% } %>
                                         </li>
+                                        
                                         <li>
+                                            <% 
+                                            if(wishlist && wishlist.length && wishlist.includes(pdtsData[i]._id)){
+                                                %>
+                                                <a class="btn btn-danger" href="/removeWishlistItem/<%= pdtsData[i]._id %>?returnPage=shop"><i class="bi bi-heart-fill"></i></a>
+                                                <%  
+                                            }else{
+                                                %>
+                                                <a class="btn btn-dark" href="/addToWishlist/<%= pdtsData[i]._id %>?returnPage=shop"><i class="bi bi-heart-fill"></i></a>
+                                                <%  
+                                            }
+                                            %>
+                                        </li>
+                                        <!-- <li>
                                             <a class="btn btn-dark product-overview-btn" data-product-id="<%= pdtsData[i]._id %>">
                                                 <i class="bi bi-search"></i>
                                             </a>
-                                        </li>
+                                        </li> -->
                                     </ul>
                                 </div>
                                 <div class="product__item__text">

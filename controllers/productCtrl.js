@@ -281,11 +281,11 @@ const loadShop = async (req, res, next) => {
 
         let userData;
         let wishlist;
-        if (req.session.userId) {
-            const userData = await User.findById({ _id: req.session.userId });
-            if (userData) {
-                cart = userData.cart.map((item) => item.productId.toString());
-            }
+
+     if(req.session.userId){
+            userData = await User.findById({_id:req.session.userId})
+            wishlist = userData.wishlist;
+            cart = userData.cart.map(item => item.productId.toString())
         }
 
         res.render('shop', {
@@ -302,6 +302,7 @@ const loadShop = async (req, res, next) => {
             brand: req.query.brand,
             removeFilter,
             search: req.query.search,
+            wishlist,
             cart,
             isLoggedIn,
             page: 'Shop',  // Make sure to include the page variable here

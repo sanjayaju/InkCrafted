@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const Addresses = require('../models/addressModel')
 const Products = require('../models/productModel')
+const Categories = require('../models/categoryModel')
 const bcrypt = require('bcrypt')
 require('dotenv').config()
 const nodemailer = require('nodemailer')
@@ -150,23 +151,24 @@ const saveAndLogin = async (req, res, next) => {
     next(error);
   }
 };
-
-const sMail = ((email, otp) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD
-    }
-  });
-
-
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD
+  }
+});
+const sMail = (email, otp) => {
   const mailOptions = {
     from: process.env.EMAIL,
     to: email,
     subject: 'Your OTP',
     text: `Your OTP is: ${otp}`
   };
+
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.log(error);
@@ -174,13 +176,29 @@ const sMail = ((email, otp) => {
       console.log('Email sent: ' + info.response);
     }
   });
-})
+};
+const sendContactMail = async(name, email, subject, message) => {
+  try {
+      
+      const mailOptions = {
+          from: process.env.EMAIL,
+          to: email,
+          subject: subject,
+          html: `<h4>Hi I'm ${name}</h4><br><p>${message}</p>`
+      }
+
+      transporter.sendMail(mailOptions)
+
+  } catch (error) {
+      throw error
+  }
+}
 
 
 
 const loadotp = async (req, res) => {
   try {
-    console.log('otppageeeeeeeeeeeeeeeeeeeeeeeeee', req.body);
+    console.log('otppageeeeeeeeeeee', req.body);
     res.render('otp')
   } catch (error) {
     console.log(error.message)
@@ -256,21 +274,43 @@ const validateOTP = async (req, res, next) => {
 const resendOTP = async (req, res, next) => {
   try {
     console.log('in resend otp controller');
-    const { email } = req.body
-    const OTP = req.session.OTP = getOTP()
+    const { email } = req.body;
+
+    // Call getOTP() again to generate a new OTP
+    const OTP = req.session.OTP = otpGen();
+
     console.log('resending otp ' + OTP + ' to ' + email);
+
     setTimeout(() => {
       req.session.OTP = null; // Or delete req.session.otp;
       console.log('otp time out');
     }, 600000);
-    sendVerifyMail(email, OTP);
 
-    res.json({ isResend: true })
+    sMail(email, OTP);
+
+    res.json({ isResend: true });
 
   } catch (error) {
     next(error);
   }
+};
+
+const loadAboutUs = async(req,res, next) => {
+  try {
+      
+      const isLoggedIn = Boolean(req.session.userId)
+      const usersCount = await User.find().count()
+      const activeUsers = await User.find({isBlocked:false}).count()
+      const happyCustomers = Math.floor( (activeUsers*100)/usersCount )
+      const categoriesCount = await Categories.find({isListed:true}).count()
+
+      res.render('aboutUs',{page : 'About Us',isLoggedIn, usersCount, happyCustomers, categoriesCount})
+  } catch (error) {
+      next(error);
+  }
 }
+
+
 
 const loadShoppingCart = async (req, res, next) => {
   try {
@@ -466,7 +506,6 @@ const postEditProfile = async (req, res, next) => {
 }
 
 
-
 const loadChangePassword = async (req, res, next) => {
   try {
     console.log('loaded change password page');
@@ -476,6 +515,8 @@ const loadChangePassword = async (req, res, next) => {
     next(error);
   }
 }
+
+
 console.log("hohoho");
 const postChangePassword = async (req, res, next) => {
   try {
@@ -564,6 +605,8 @@ const addMoneyToWallet = async(req, res, next) => {
       next(error)
   }
 }
+
+
 const loadWishlist = async(req, res, next) => {
   try {
       console.log('loading wishlist');
@@ -624,6 +667,18 @@ const removeWishlistItem = async(req, res, next) => {
 }
 
 
+const contactUs = async(req, res, next) => {
+  try {
+      console.log('sending mail');
+      const { fullname, email, subject, message } = req.body
+      await sendContactMail(fullname, email, subject, message)
+      res.json({ status: true })
+  } catch (error) {
+     res.json({ status: false })
+  }
+}
+
+
 module.exports = {
   loadHome,
   loadLogin,
@@ -633,6 +688,7 @@ module.exports = {
   saveAndLogin,
   validateOTP,
   resendOTP,
+  loadAboutUs,
   sendotp,
   loadotp,
   loadShoppingCart,
@@ -648,7 +704,8 @@ module.exports = {
   addMoneyToWallet,
   loadWishlist,
   addToWishlist,
-  removeWishlistItem
+  removeWishlistItem,
+  contactUs
 }
 
 

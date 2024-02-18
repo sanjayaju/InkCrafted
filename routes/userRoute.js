@@ -37,6 +37,8 @@ user_route.post('/signup',userCtrl.sendotp)
 
 user_route.get('/shop',productCtrl.loadShop)
 user_route.get('/shop/productOverview/:id',productCtrl.loadProductOverview);
+user_route.get('/aboutUs',userCtrl.loadAboutUs);
+user_route.post('/contactForm',userCtrl.contactUs);
 
 
 //to check isUserLoggedIn after this route
@@ -89,8 +91,7 @@ user_route.get('/cancelSinglePrdt/:orderId/:pdtId',orderCtrl.cancelSinglePdt)
 user_route.get('/returnOrder/:orderId',orderCtrl.returnOrder)
 
 
-
-user_route.post('/profile/addMoneyToWallet/',userCtrl.addMoneyToWallet)
 user_route.get('/profile/walletHistory',userCtrl.loadWalletHistory)
+user_route.post('/profile/addMoneyToWallet/',userCtrl.addMoneyToWallet)
 
 module.exports = user_route;

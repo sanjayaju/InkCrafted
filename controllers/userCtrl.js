@@ -3,6 +3,7 @@ const Addresses = require('../models/addressModel')
 const Products = require('../models/productModel')
 const Categories = require('../models/categoryModel')
 const bcrypt = require('bcrypt')
+const { securePassword } = require('../helpers/generator')
 require('dotenv').config()
 const nodemailer = require('nodemailer')
 const { otpGen } = require("./otpgenarator")
@@ -505,6 +506,97 @@ const postEditProfile = async (req, res, next) => {
   }
 }
 
+const loadPassConfirmToChangeMail = async(req,res, next) => {
+  try {
+      res.render('passConfirmToChangeMail')
+  } catch (error) {
+      next(error);
+  }
+}
+
+const postPassConfirmToChangeMail = async(req,res, next) => {
+  try {
+      const id = req.session.userId;
+      const password = req.body.password
+      const userData = await User.findById({ _id: id })
+      const passwordMatch = await bcrypt.compare(password,userData.password)
+      if(passwordMatch){
+          res.redirect('/profile/changeMail')
+      }else{
+          res.redirect('/profile/')
+      }
+  } catch (error) {
+      next(error);
+  }
+}
+
+const loadChangeMail = async(req,res, next) => {
+  try {
+      res.render('changeMail')
+  } catch (error) {
+      next(error);
+  }
+}
+
+const postChangeMail = async(req,res, next) => {
+  try {
+
+      const newMail = req.body.email
+
+      const isMailExist = await User.findOne({email:newMail})
+
+      if(isMailExist){
+          console.log('Mail Already Exist');
+          return
+      }else{
+          
+          const OTP = req.session.OTP = otpGen()
+          console.log('OTP generated when posted new email '+OTP);
+
+          setTimeout(() => {
+              req.session.OTP = null; // Or delete req.session.otp;
+              console.log('otp time out');
+          }, 600000); 
+
+          sMail(newMail, OTP); 
+          req.session.newMail = newMail
+          res.render('otpToChangeMail')
+      }
+
+
+  } catch (error) {
+      next(error);
+  }
+}
+
+
+const otpValidationToChangeMail = async(req, res, next) => {
+  try {
+      const userId = req.session.userId;
+      const newMail = req.session.newMail;
+      const OTP = req.body.OTP;
+      const adminOTP = req.session.OTP
+
+      if(OTP == adminOTP){
+
+          await User.findByIdAndUpdate(
+              {_id:userId},
+              {
+                  $set:{
+                      email: newMail
+                  }
+              }
+          );
+          res.redirect('/profile')
+
+      }else{
+          console.log('OTP not correct');
+      }
+  } catch (error) {
+      next(error);
+  }
+}
+
 
 const loadChangePassword = async (req, res, next) => {
   try {
@@ -544,7 +636,7 @@ const postChangePassword = async (req, res, next) => {
     // Check if the old password is correct
     if (passwordMatch) {
       // Hash the new password
-      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      const hashedNewPassword = await securePassword(newPassword, 10);
       console.log('Hashed New Password:', hashedNewPassword);
 
       // Update the user's password in the database
@@ -568,6 +660,72 @@ const postChangePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+const forgotPassword = async(req, res, next) => {
+  try {
+      console.log('loaded forgot password');
+      const userMail = await User.findById({_id: req.session.userId},{email:1,_id:0})
+      const OTP = req.session.OTP = otpGen() 
+      sMail(userMail.email, OTP);
+      setTimeout(() => {
+          req.session.OTP = null; // Or delete req.session.otp;
+          console.log('otp time out');
+      }, 600000); 
+      res.render('forgotPasswordVerification')
+
+  } catch (error) {
+      next(error);
+  }
+}
+
+
+const verifyOTPforgotPass = async(req, res, next) => {
+  try {
+      const userOTP = req.body.OTP
+      const adminOTP = req.session.OTP
+      if(userOTP == adminOTP){
+          res.render('resetPassword')
+      }else{
+          console.log('OTP not matching .... :(');
+          res.redirect('/profile/forgotPassword')
+      }
+  } catch (error) {
+      next(error);
+  }
+}
+
+const loadResetPassword = async(req, res, next) => {
+  try {
+      res.render('resetPassword')
+  } catch (error) {
+      next(error);
+  }
+}
+
+const postResetPassword = async(req, res, next) => {
+  try {
+      const { newPassword, confirmPassword} = req.body
+      if(newPassword !== confirmPassword){
+          return res.redirect('/profile/resetPassword');
+      }else{
+          const userId = req.session.userId;
+          const sPassword = await securePassword(newPassword)
+          await User.findByIdAndUpdate(
+              { _id: userId },
+              {
+                  $set:{
+                      password:sPassword
+                  }
+              }
+          );
+          console.log('password updated');
+          return res.redirect('/profile');
+      }
+  } catch (error) {
+      next(error);
+  }
+}
+
 
 const loadWalletHistory = async(req, res, next) => {
   try {
@@ -698,8 +856,17 @@ module.exports = {
   loadProfile,
   loadEditProfile,
   postEditProfile,
+  loadPassConfirmToChangeMail,
+  postPassConfirmToChangeMail,
+  loadChangeMail,
+  postChangeMail,
+  otpValidationToChangeMail,
   loadChangePassword,
   postChangePassword,
+  forgotPassword,
+  verifyOTPforgotPass,
+  loadResetPassword,
+  postResetPassword,
   loadWalletHistory,
   addMoneyToWallet,
   loadWishlist,

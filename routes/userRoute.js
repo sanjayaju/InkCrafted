@@ -77,8 +77,20 @@ user_route.post('/profile/editAddress/:id',addressCtrl.postEditAddress)
 user_route.get('/profile/deleteAddress/:id',addressCtrl.deleteAddress)
 
 
+user_route.get('/profile/passConfirmToChangeMail',userCtrl.loadPassConfirmToChangeMail)
+user_route.post('/profile/passConfirmToChangeMail',userCtrl.postPassConfirmToChangeMail)
+user_route.get('/profile/changeMail',userCtrl.loadChangeMail)
+user_route.post('/profile/changeMail',userCtrl.postChangeMail)
+user_route.post('/profile/otpToChangeMail',userCtrl.otpValidationToChangeMail)
+
+
 user_route.get('/profile/changePassword',userCtrl.loadChangePassword)
 user_route.post('/profile/changePassword',userCtrl.postChangePassword)
+
+user_route.get('/profile/forgotPassword',userCtrl.forgotPassword)
+user_route.post('/profile/forgotPasswordVerification',userCtrl.verifyOTPforgotPass)
+user_route.get('/profile/resetPassword',userCtrl.loadResetPassword)
+user_route.post('/profile/resetPassword',userCtrl.postResetPassword)
 
 
 

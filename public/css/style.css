@@ -1388,6 +1388,10 @@ ol {
 .shop__sidebar__brand ul {
 	height: 225px;
 }
+.shop__sidebar__categories ul li:hover {
+    background-color: black;
+    color: white;
+}
 
 .shop__sidebar__categories ul li,
 .shop__sidebar__price ul li,
@@ -1415,10 +1419,17 @@ ol {
 .shop__sidebar__brand ul {
 	height: auto;
 }
+.shop__sidebar__brand ul li:hover {
+    background-color: black;
+    color: white;
+}
+
 
 .shop__sidebar__price ul {
 	height: auto;
 }
+
+
 
 .shop__sidebar__size {
 	padding-top: 15px;
@@ -1563,6 +1574,63 @@ ol {
 	top: 2px;
 	line-height: 20px;
 }
+/* Add this section for InkColor styling */
+.shop__sidebar__inkcolor ul {
+    height: auto;
+}
+
+
+.shop__sidebar__inkcolor ul li {
+    list-style: none;
+}
+
+.shop__sidebar__inkcolor ul li a {
+    display: block;
+    padding: 10px;
+    color: #b7b7b7;
+    font-size: 15px;
+    line-height: 32px;
+    -webkit-transition: all, 0.3s;
+    -o-transition: all, 0.3s;
+    transition: all, 0.3s;
+}
+
+.shop__sidebar__inkcolor ul li a:hover {
+    /* color: #111111; */
+    background-color: black;
+	color: white;
+}
+
+
+.shop__sidebar__inkcolor ul li a.active {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.5);
+}
+
+.shop__sidebar__inkcolor ul li a input {
+    position: absolute;
+    visibility: hidden;
+}
+
+.shop__sidebar__inkcolor label:after {
+    position: absolute;
+    left: -3px;
+    top: -3px;
+    height: 36px;
+    width: 36px;
+    border: 1px solid #e5e5e5;
+    content: "";
+    border-radius: 50%;
+}
+
+.shop__sidebar__inkcolor label input {
+    position: absolute;
+    visibility: hidden;
+}
+
+/* End of InkColor styling */
+
 
 .shop__product__option {
 	margin-bottom: 45px;

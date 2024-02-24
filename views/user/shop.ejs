@@ -5,6 +5,15 @@
 <!-- Shop Section Begin -->
 <section class="shop spad">
     <div class="container">
+         <!-- Add the search form here
+         <div class="row mb-3">
+            <div class="col-lg-12">
+                <form action="/shop" method="GET">
+                    <input type="text" name="search" placeholder="Search...">
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+        </div> -->
         <div class="row">
             <div class="col-lg-3">
                 <div class="shop__sidebar">
@@ -70,12 +79,12 @@
                                         <div class="shop__sidebar__inkcolor">
                                             <ul>
                                                 <li>
-                                                    <a href="?inkColor=blue&sortValue=<%= sortValue %>" style="background-color: rgba(0, 0, 0, 0.5);color: black;"">
+                                                    <a href="?inkColor=blue&sortValue=<%= sortValue %>">
                                                         Blue
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a href="?inkColor=black&sortValue=<%= sortValue %>" style="background-color: rgba(0, 0, 0, 0.5);color: black;"">
+                                                    <a href="?inkColor=black&sortValue=<%= sortValue %>" >
                                                         Black
                                                     </a>
                                                 </li>
@@ -171,18 +180,15 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="product__pagination  d-flex justify-content-end">
-                            <% 
-                            for (let i = 1; i <= pageCount; i++) {
-                            %>
-                                <a href="/shop?page=<%= i %>&sortValue=<%= sortValue %>&category=<%= category %>&brand=<%= brand %>">
+                            <% for (let i = 1; i <= pageCount; i++) { %>
+                                <a href="/shop?page=<%= i %>&sortValue=<%= sortValue %>&category=<%= category %>&brand=<%= brand %>&inkColor=<%= inkColor %>">
                                     <%= i %>
                                 </a>
-                            <%  
-                            }
-                            %>
+                            <% } %>
                         </div>
                     </div>
                 </div>
+                
             </div>
         </div>
     </div>

@@ -1,6 +1,9 @@
 const Products = require('../models/productModel')
 const Categories = require('../models/categoryModel');
 const User = require('../models/userModel')
+const Orders =  require('../models/orderModel')
+const fs = require('fs')
+const path = require('path')
 
 
 
@@ -57,7 +60,7 @@ const addProductDetails = async (req, res, next) => {
             name: productName,
             description,
             category: catData._id,
-            InkColor: 'Black',
+            InkColor: req.body.InkColor, 
             price,
             quantity,
             images,
@@ -86,9 +89,7 @@ const loadEditProduct = async(req, res, next) => {
 
 const postEditProduct  = async(req,res,next)=>{
     try{
-        const{
-            id,productName,category,InkColor,quantity,price,description,
-        } = req.body
+        const { id, productName, category, inkColor, quantity, price, description } = req.body;
 
         const brand = req.body.brand.toUpperCase()
 
@@ -108,17 +109,22 @@ const postEditProduct  = async(req,res,next)=>{
         const catData = await Categories.findOne({name:category})
         console.log(catData);
         await Products.findByIdAndUpdate(
-            {_id:id},
-         {
-            $set: {
-                brand, name: productName, category: catData._id, quantity,
-                description, price, inkColor: InkColor,
+            { _id: id },
+            {
+               $set: {
+                  brand,
+                  name: productName,
+                  category: catData._id,
+                  quantity,
+                  description,
+                  price,
+                  InkColor: inkColor, 
+               },
             }
-         }   
-        )
-        console.log("hai");
+         )
+         console.log('Product updated successfully');
         res.redirect('/admin/products')
-        console.log("no hai");
+        console.log("NOt updated ");
     }catch (error){
         next(error);
     }
@@ -165,29 +171,32 @@ const deleteImage = async(req,res,next)=>{
 const loadShop = async (req, res, next) => {
     try {
         const isLoggedIn = Boolean(req.session.userId);
-        let cart = [];  // Declare cart here to avoid ReferenceError
+        let cart = [];
 
-        let page = 1;
-        if (req.query.page) {
-            page = req.query.page;
-        }
-
+        let page = req.query.page || 1;
         let limit = 6;
 
-        let minPrice = 1;
-        let maxPrice = Number.MAX_VALUE;
+        let minPrice = req.query.minPrice && parseInt(req.query.minPrice) ? parseInt(req.query.minPrice) : 1;
+        let maxPrice = req.query.maxPrice && parseInt(req.query.maxPrice) ? parseInt(req.query.maxPrice) : Number.MAX_VALUE;
 
-        if (req.query.minPrice && parseInt(req.query.minPrice)) {
-            minPrice = parseInt(req.query.minPrice);
-        }
+        console.log("searching");
+        console.log('Request Query Parameters:', req.query);
+        console.log("Search Parameter from Request:", req.query.search);
 
-        if (req.query.maxPrice && parseInt(req.query.maxPrice)) {
-            maxPrice = parseInt(req.query.maxPrice);
-        }
+        let search = req.query.search || '';
+        
+        console.log("Search Query:", search);
 
-        let search = '';
-        if (req.query.search) {
-            search = req.query.search;
+        async function getCategoryIds(search) {
+            const categories = await Categories.find({
+                name: {
+                    $regex: '.*' + search + '.*',
+                    $options: 'i'
+                }
+            });
+            const categoryIds = categories.map(category => category._id);
+            console.log('Category IDs:', categoryIds);
+            return categoryIds;
         }
 
         const query = {
@@ -212,14 +221,21 @@ const loadShop = async (req, res, next) => {
             },
         };
 
-        if (req.query.search) {
-            search = req.query.search;
+        let inkColor = req.query.inkColor;
+        if (inkColor) {
+            inkColor = inkColor.toLowerCase();
+            query.InkColor = { $regex: inkColor, $options: 'i' };
+        }
+
+        if (search) {
             query.$or.push({
                 category: {
                     $in: await getCategoryIds(search),
                 },
             });
         }
+
+        console.log('Constructed Query:', query);
 
         if (req.query.category) {
             query.category = req.query.category;
@@ -229,10 +245,7 @@ const loadShop = async (req, res, next) => {
             query.brand = req.query.brand;
         }
 
-        let sortValue = 1;
-        if (req.query.sortValue) {
-            sortValue = req.query.sortValue;
-        }
+        let sortValue = req.query.sortValue || 1;
 
         let pdtsData;
         if (sortValue == 1) {
@@ -260,6 +273,7 @@ const loadShop = async (req, res, next) => {
             }
 
             pdtsData = pdtsData.slice((page - 1) * limit, page * limit);
+            console.log('Sorted and Paginated pdtsData:', pdtsData);
         }
 
         const categoryNames = await Categories.find({});
@@ -274,16 +288,13 @@ const loadShop = async (req, res, next) => {
         let totalProductsCount = await Products.find(query).count();
         let pageCount = Math.ceil(totalProductsCount / limit);
 
-        let removeFilter = 'false';
-        if (req.query && !req.query.page) {
-            removeFilter = 'true';
-        }
+        let removeFilter = req.query && !req.query.page ? 'true' : 'false';
 
         let userData;
         let wishlist;
 
-     if(req.session.userId){
-            userData = await User.findById({_id:req.session.userId})
+        if (req.session.userId) {
+            userData = await User.findById({ _id: req.session.userId })
             wishlist = userData.wishlist;
             cart = userData.cart.map(item => item.productId.toString())
         }
@@ -301,56 +312,124 @@ const loadShop = async (req, res, next) => {
             category: req.query.category,
             brand: req.query.brand,
             removeFilter,
-            search: req.query.search,
+            search,
+            inkColor,
+            pageTitle: 'Shop',
             wishlist,
             cart,
             isLoggedIn,
-            page: 'Shop',  // Make sure to include the page variable here
+            page: 'Shop',
         });
     } catch (error) {
+        console.error('Error:', error);
         next(error);
     }
 };
+
 
 const loadProductOverview = async (req, res, next) => {
     try {
         const id = req.params.id;
         const userId = req.session.userId;
         const isLoggedIn = Boolean(userId);
-        const pdtData = await Products.findById({ _id: id });
+        const pdtData = await Products.findById({ _id: id }).populate('reviews.userId');
 
         let isPdtExistInCart = false;
-        let userData; // Define userData outside the try block
+        let isPdtAWish = false;
+        let isUserReviewed = false;
 
         if (userId) {
-            // Fetch user data and assign it to the userData variable
-            userData = await User.findById({ _id: userId });
+            const userData = await User.findById({ _id: userId });
+            const wishlist = userData.wishlist;
 
-            // Check if userData is defined before using forEach
-            if (userData && userData.cart) {
-                userData.cart.forEach((pdt) => {
-                    if (pdt.productId == id) {
-                        isPdtExistInCart = true;
-                    }
-                });
+            if (wishlist.find((productId) => productId == id)) {
+                isPdtAWish = true;
             }
+
+            userData.cart.forEach((pdt) => {
+                if (pdt.productId == id) {
+                    isPdtExistInCart = true;
+                }
+            });
+
+            pdtData.reviews.forEach((review) => {
+                if (review.userId._id == userId) {
+                    isUserReviewed = true;
+                }
+            });
         }
 
-        let currPrice = pdtData.price; // Assuming no offer price
+        // Calculate current price without discountPrice and offerPrice
+        const currPrice = pdtData.price;
+
+        const discountPercentage = Math.floor(100 - ((currPrice * 100) / pdtData.price));
 
         res.render('productOverview', {
             pdtData,
             parentPage: 'Shop',
             page: 'Product Overview',
             isLoggedIn,
+            isPdtAWish,
             isPdtExistInCart,
+            isUserReviewed,
             currPrice,
-            cart: userData ? userData.cart : [], // Use userData here
+            discountPercentage,
         });
     } catch (error) {
         next(error);
     }
 };
+
+const loadAddReview = async(req, res, next) => {
+    try {
+        const { productId } = req.params
+        const { userId } = req.session
+        let isPdtPurchased = false
+        const isLoggedIn = Boolean(req.session.userId)
+        const orderData = await Orders.findOne({ userId, 'products.productId': productId })
+        if(orderData) isPdtPurchased = true
+
+        res.render('addReview',{page:'Reviews', parentPage:'Shop',isPdtPurchased, productId, userId, isLoggedIn})
+    } catch (error) {
+        next(error)
+    }
+}
+
+const postAddReview = async(req, res, next) => {
+    try {
+        const { productId } = req.params
+        const { userId } = req.session
+        const { rating, title, description } = req.body
+
+        await Products.updateOne(
+            {_id:productId},
+            {
+                $push:{
+                    reviews:{
+                        userId, title, rating, description, createdAt: new Date()
+                    }
+                }
+            }
+        );
+
+        const pdtData = await Products.findById({_id:productId})
+        const totalRating = pdtData.reviews.reduce((sum, review) => sum += review.rating, 0)
+        const avgRating = Math.floor(totalRating/pdtData.reviews.length)
+
+        await Products.updateOne(
+            {_id:productId},
+            {
+                $set:{
+                    totalRating: avgRating
+                }
+            }
+        );
+
+        res.redirect(`/shop/productOverview/${productId}`)
+    } catch (error) {
+        next(error)
+    }
+}
 
 
 
@@ -363,6 +442,8 @@ module.exports = {
     deleteProduct,
     deleteImage,
     loadShop,
-    loadProductOverview
+    loadProductOverview,
+    loadAddReview,
+    postAddReview
 }
 

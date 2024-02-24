@@ -126,8 +126,10 @@
 
                         <div class="shop__sidebar__search mx-3">
                             <div class="d-flex" >
-                                <input type="search" id="queryInput" onkeydown="checkEnterKey(event)" placeholder=" Search..." class="" style="width: 10rem; height: 2rem; border: 1; border-color: thistle;"  >
-                                <button onclick="submitQuery()" class="me-4" style="border: 1px solid black; background-color: black;"><i class="bi bi-search text-white" style="background-color: black;"></i></button>
+                                <form action="/shop" method="GET">
+                                    <input type="text" id="queryInput" name="search" placeholder=" Search..." style="width: 10rem; height: 2rem; border: 1; border-color: thistle;"  >
+                                    <button type="submit" style="border: 1px solid black; background-color: black;"><i class="bi bi-search text-white" style="background-color: black;"></i></button>
+                                </form>
                             </div>
                         </div>
 
@@ -171,5 +173,13 @@
             </div>
             <div class="canvas__open"><i class="fa fa-bars"></i></div>
         </div>
+        <script>
+            // Add this script at the end of the header section
+            document.getElementById("queryInput").addEventListener("input", function () {
+                // Capture and log user input
+                var userInput = this.value;
+                console.log("User Input:", userInput);
+            });
+        </script>
     </header>
     <!-- Header Section End -->

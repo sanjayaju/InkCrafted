@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const Addresses = require('../models/addressModel')
 const Products = require('../models/productModel')
 const Categories = require('../models/categoryModel')
+const Banners = require('../models/bannerModal')
 const bcrypt = require('bcrypt')
 const { securePassword } = require('../helpers/generator')
 require('dotenv').config()
@@ -17,22 +18,17 @@ var instance = new Razorpay({
 });
 
 
-const loadHome = async (req, res, next) => {
+const loadHome = async(req,res, next) => {
   try {
-    const isLoggedIn = Boolean(req.session.userId);
+      const isLoggedIn = Boolean(req.session.userId)
+      const banners = await Banners.find({})
 
-    // Fetch additional user data based on the userId
-    if (isLoggedIn) {
-      const userData = await User.findById(req.session.userId);
-      const userName = userData ? `${userData.fname} ${userData.lname}` : '';
-      res.render('home', { page: 'Home', isLoggedIn, userName });
-    } else {
-      res.render('home', { page: 'Home', isLoggedIn });
-    }
+      res.render('home',{page : 'Home', isLoggedIn, banners});
   } catch (error) {
-    next(error);
+      next(error);
   }
-};
+}
+
 
 
 const loadLogin = async (req, res, next) => {

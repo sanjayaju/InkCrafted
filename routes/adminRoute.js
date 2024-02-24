@@ -1,11 +1,11 @@
 const express = require('express');
 const adminCtrl = require('../controllers/adminCtrl');
-const { isAdminLoggedIn, isAdminLoggedOut } = require('../middleware/auth')
-const upload = require('../config/multer');
-const session = require('express-session');
 const productCtrl = require('../controllers/productCtrl');
 const categoryCtrl = require('../controllers/categoryCtrl');
 const orderCtrl = require('../controllers/orderCtrl')
+const bannerCtrl = require('../controllers/bannerCtrl')
+const upload = require('../config/multer');
+const { isAdminLoggedIn, isAdminLoggedOut } = require('../middleware/auth')
 
 
 const admin_route = express()
@@ -60,6 +60,8 @@ admin_route.get('/cancelOrder/:orderId',orderCtrl.cancelOrder)
 admin_route.get('/cancelSinglePrdt/:orderId/:pdtId',orderCtrl.cancelSinglePdt)
 admin_route.get('/approveReturn/:orderId',orderCtrl.approveReturn) 
 
+admin_route.get('/banners',bannerCtrl.loadBannerList) 
+admin_route.post('/addBanner',upload.single('bannerImage'),bannerCtrl.addBanner)
 
 
 module.exports = admin_route;

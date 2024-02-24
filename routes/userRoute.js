@@ -45,6 +45,10 @@ user_route.post('/contactForm',userCtrl.contactUs);
 user_route.use('/', isUserLoggedIn)
 
 
+user_route.get('/addReview/:productId',productCtrl.loadAddReview)
+user_route.post('/addReview/:productId',productCtrl.postAddReview)
+
+
 user_route.get('/logout', userCtrl.logoutUser);
 
 

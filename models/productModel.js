@@ -1,46 +1,70 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const productsSchema = mongoose.Schema({
     brand: {
         type: String,
-        required: true
+        required: true,
     },
     name: {
         type: String,
-        required: true
+        required: true,
     },
     description: {
         type: String,
-        required: true
+        required: true,
     },
     category: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Categories'
+        ref: 'Categories',
     },
-    InkColor:{
+    InkColor: {
         type: String,
-        required: false,
-        enum: ['Black', 'Blue']
+        required: true,
+        match: [/^(black|blue)$/i, 'Invalid InkColor'], // Case-insensitive match for 'black' or 'blue'
     },
+       
     price: {
         type: Number,
-        required: true
+        required: true,
     },
     quantity: {
-        type: Number
+        type: Number,
     },
     images: {
         type: Array,
-        required: true
+        required: true,
     },
     isListed: {
-        type : Boolean,
-        default: true
+        type: Boolean,
+        default: true,
+    },
+    reviews: [
+        {
+            userId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+            },
+            title: {
+                type: String,
+            },
+            description: {
+                type: String,
+            },
+            rating: {
+                type: Number,
+            },
+            createdAt: {
+                type: Date,
+            },
+        },
+    ],
+    totalRating: {
+        type: Number,
+        default: 0,
     },
 },
 {
-    timestamps:true,
-})
+    timestamps: true,
+});
 
-
-module.exports = mongoose.model('Products',productsSchema)
+module.exports = mongoose.model('Products', productsSchema);

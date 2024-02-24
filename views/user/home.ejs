@@ -122,6 +122,53 @@
     </section> -->
     <!-- Categories Section End -->
 
+       <!-- Banner Section Begin -->
+<section class="banner my-5">
+    <% 
+    if(banners && banners.length> 0){
+        %>
+            <div class="container">
+                <div class="row">
+                    <% 
+                    banners.forEach((banner, index) => {
+                        if(index%2 == 0){
+                            %>
+                            <div class="col-lg-7 offset-lg-4">
+                                <div class="banner__item ">
+                                    <div class="banner__item__pic">
+                                        <img src="/images/bannerImages/<%= banner.image %>" alt="Banner image">
+                                    </div>
+                                    <div class="banner__item__text">
+                                        <h2><%= banner.heading %></h2>
+                                        <a href="<%= banner.url %>">Shop now</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <%  
+                        }else{
+                            %>
+                            <div class="col-lg-5">
+                                <div class="banner__item banner__item--middle">
+                                    <div class="banner__item__pic">
+                                        <img src="/images/bannerImages/<%= banner.image %>" alt="Banner image">
+                                    </div>
+                                    <div class="banner__item__text">
+                                        <h2><%= banner.heading %></h2>
+                                        <a href="<%= banner.url %>">Shop now</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <% 
+                        }
+                    })
+                    %>
+                </div>
+            </div>
+        <%  
+    }
+    %>
+</section>
+
     <!-- Instagram Section Begin -->
     <section class="instagram spad my-5">
         <div class="container">

@@ -47,6 +47,9 @@ user_route.use('/', isUserLoggedIn)
 
 user_route.get('/addReview/:productId',productCtrl.loadAddReview)
 user_route.post('/addReview/:productId',productCtrl.postAddReview)
+user_route.get('/editReview/:productId',productCtrl.loadEditReview)
+user_route.post('/editReview/:productId',productCtrl.postEditReview)
+user_route.get('/allReviews/:productId',productCtrl.loadAllReviews)
 
 
 user_route.get('/logout', userCtrl.logoutUser);

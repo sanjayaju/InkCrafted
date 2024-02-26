@@ -431,6 +431,77 @@ const postAddReview = async(req, res, next) => {
     }
 }
 
+const loadEditReview = async(req, res, next) => {
+    try {
+        const { productId } = req.params
+        const { userId } = req.session;
+        const isLoggedIn = Boolean(userId)
+        const pdtData = await Products.findOne(
+            {
+                _id:productId,
+                reviews:{
+                    $elemMatch: { userId }
+                }
+            }
+        ).populate('reviews.userId');
+
+        const reviewData = pdtData.reviews.find((review) => review.userId._id == userId)
+        res.render('editReview',{ reviewData, productId, isLoggedIn, page:'Edit Review', parentPage: 'Shop' })
+    } catch (error) {
+        next(error)
+    }
+}
+
+const postEditReview = async(req, res, next) => {
+    try {
+
+        const { productId } = req.params
+        const { reviewId }  = req.query
+        const { rating, title, description } = req.body
+
+        await Products.updateOne(
+            {_id:productId, 'reviews._id': reviewId },
+            {
+                $set:{
+                    'reviews.$.rating' : rating,
+                    'reviews.$.title' : title,
+                    'reviews.$.description' : description
+                }
+            }
+        );
+        
+        const pdtData = await Products.findById({_id:productId})
+        const totalRating = pdtData.reviews.reduce((sum, review) => sum += review.rating, 0)
+        const avgRating = Math.floor(totalRating/pdtData.reviews.length)
+
+        await Products.updateOne(
+            {_id:productId},
+            {
+                $set:{
+                    totalRating: avgRating
+                }
+            }
+        );
+        
+        res.redirect(`/shop/productOverview/${productId}`)
+    } catch (error) {
+        next(error)
+    }
+}
+
+
+const loadAllReviews = async(req, res, next) => {
+    try {
+        const { productId } = req.params
+        const { userId } = req.session
+        const isLoggedIn = Boolean(userId)
+        const pdtData = await Products.findById({_id: productId})
+        res.render('showReviews',{pdtData, userId, page:'Reviews', parentPage:'Shop', isLoggedIn})
+    } catch (error) {
+        next(error)
+    }
+}
+
 
 
 module.exports = {
@@ -444,6 +515,9 @@ module.exports = {
     loadShop,
     loadProductOverview,
     loadAddReview,
-    postAddReview
+    postAddReview,
+    loadEditReview,
+    postEditReview,
+    loadAllReviews
 }
 

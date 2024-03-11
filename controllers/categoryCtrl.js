@@ -1,16 +1,19 @@
 const Categories = require('../models/categoryModel');
 const Products = require('../models/productModel');
+const Offers = require('../models/offerModel')
 
-
-const loadCategories = async (req, res, next) => {
+const loadCategories = async(req, res, next) => {
     try {
-        const categories = await Categories.find();
-        res.render('categories', { categories, page: 'Categories' });
+        const categories = await Categories.find({}).populate('offer')
+        const offerData = await Offers.find({ $or: [
+            {status : 'Starting Soon'},
+            {status : 'Available' }
+        ]});
+        res.render('categories',{categories, page:'Categories', offerData})
     } catch (error) {
         next(error);
     }
 }
-
 
 const addCategory = async (req, res, next) => {
     try {

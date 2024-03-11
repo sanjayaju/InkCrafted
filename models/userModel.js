@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
         productPrice:{
             type: Number,
             required : true
+        },
+        discountPrice:{
+            type : Number,
+            required : true
         }
        
     }],

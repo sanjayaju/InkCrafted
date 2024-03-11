@@ -31,7 +31,17 @@
                                         <div class="product__cart__item__text">
                                             <h6><%= pdt.name %></h6>
                                             <h6><%= pdt.brand %></h6>
-                                            <h5>&#8377;<%= pdt.price %></h5>
+                                            <% 
+                                            let currPrice;
+                                            if(pdt.offerPrice){
+                                               // console.log('product has offer'+hello)
+                                                currPrice = pdt.offerPrice
+                                            }else{
+                                                currPrice = pdt.price - pdt.discountPrice
+                                            }
+                                            let discountPercentage = Math.floor(100 - ( (currPrice*100)/pdt.price ));
+                                            %>
+                                            <h5>&#8377;<%= currPrice %></h5>
                                         </div>
                                     </a>
                                 </td>

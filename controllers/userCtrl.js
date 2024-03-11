@@ -58,6 +58,8 @@ const verifyLogin = async (req, res, next) => {
 
         if (!userData.isBlocked) {
           req.session.userId = userData._id
+          req.session.cartCount = userData.cart.length
+          req.session.wishCount = userData.wishlist.length
           res.redirect('/')
         } else {
           // If user is blocked, destroy the session and redirect to a blocked page
@@ -242,15 +244,19 @@ const validateOTP = async (req, res, next) => {
         // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, 10);
 
+     
+
         const user = new User({
           fname: fname,
           lname: lname,
           email: email,
           mobile: mobile,
-          password: hashedPassword, // Save the hashed password
+          password: hashedPassword,
         });
         console.log(user, "userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
         await user.save();
+        
+       
         console.log(user, 'userrrr');
         res.render('signup', { successMessage: 'Signup successful. You ca now login.' });
       } else {
@@ -307,127 +313,140 @@ const loadAboutUs = async(req,res, next) => {
   }
 }
 
-
-
-const loadShoppingCart = async (req, res, next) => {
+const loadShoppingCart = async(req, res, next) => {
   try {
-    const userId = req.session.userId;
-    const userData = await User.findById({ _id: userId }).populate('cart.productId').populate('cart.productId.offer');
-    const cartItems = userData.cart;
+      const userId = req.session.userId;
+      const userData = await User.findById({_id:userId}).populate('cart.productId').populate('cart.productId.offer')
+      const cartItems = userData.cart
 
-    // Code to update cart values if product price changed by admin after we added pdt into cart
-    for (const { productId } of cartItems) {
-      await User.updateOne(
-        { _id: userId, 'cart.productId': productId._id },
-        {
-          $set: {
-            'cart.$.productPrice': productId.price,
-            // Remove the line for 'cart.$.discountPrice'
-          }
-        }
-      );
-    }
-     console.log("cart is here");
-    res.render('shoppingCart', { page: 'Shopping Cart', parentPage: 'Shop', isLoggedIn: true, userData, cartItems });
-    console.log("cart page");
+      //Code to update cart values if product price changed by admin after we added pdt into cart
+      for(const { productId } of cartItems ){
+          await User.updateOne(
+              { _id: userId, 'cart.productId': productId._id },
+              {
+                  $set: {
+                      'cart.$.productPrice': productId.price,
+                      'cart.$.discountPrice': productId.discountPrice
+                  }
+              }
+          )
+      }
+
+      res.render('shoppingCart',{page: 'Shopping Cart', parentPage: 'Shop', isLoggedIn: true, userData, cartItems})
   } catch (error) {
-    console.log("cart error");
-    next(error);
+      next(error); 
   }
-};
+}
 
 console.log("add to cart");
-const addToCart = async (req, res, next) => {
+
+const addToCart = async(req, res, next) => {
   try {
       const pdtId = req.params.id;
       const userId = req.session.userId;
 
-      const userData = await User.findById({ _id: userId });
-      const pdtData = await Products.findById({ _id: pdtId });
+      const userData = await User.findById({_id:userId})
+      const pdtData = await Products.findById({_id: pdtId})
+      
+      if(pdtData.quantity){
+          
+          const isproductExist = userData.cart.findIndex((pdt) => pdt.productId == pdtId)
+          if(isproductExist === -1){
 
-      if (pdtData.quantity) {
-          const isproductExist = userData.cart.findIndex((pdt) => pdt.productId == pdtId);
-          if (isproductExist === -1) {
+
               const cartItem = {
-                  productId: pdtId,
-                  quantity: 1,
-                  productPrice: pdtData.price,
-              };
-
+                  productId : pdtId,
+                  quantity : 1,
+                  productPrice : pdtData.price,
+                  discountPrice : pdtData.discountPrice
+              }
+      
               await User.findByIdAndUpdate(
-                  { _id: userId },
+                  {_id: userId},
                   {
-                      $push: {
-                          cart: cartItem,
-                      },
+                      $push:{
+                          cart: cartItem
+                      }
                   }
-              );
-
+              )
+  
               req.session.cartCount++;
-          } else {
+
+          }else{
+                  
               await User.updateOne(
-                  { _id: userId, 'cart.productId': pdtId },
+                  {_id: userId, 'cart.productId' : pdtId},
                   {
-                      $inc: {
-                          'cart.$.quantity': 1,
-                      },
+                      $inc:{
+                          "cart.$.quantity":1
+                      }
                   }
               );
-
-              console.log('Product already exists in the cart, quantity incremented by 1');
+  
+              console.log('Product already exist on cart, quantity incremeted by 1');
           }
+
       }
 
-      res.redirect('/shoppingCart');
+      res.redirect('/shoppingCart')
+
   } catch (error) {
       next(error);
   }
-};
-
-
-const updateCart = async (req, res, next) => {
+}
+const updateCart = async(req, res, next) => {
   try {
       const userId = req.session.userId;
-      const quantity = parseInt(req.body.amt);
-      const prodId = req.body.prodId;
+      const quantity = parseInt(req.body.amt)
+      const prodId = req.body.prodId
 
-      const pdtData = await Products.findById({ _id: prodId });
+      const pdtData = await Products.findById({ _id: prodId })
 
       const stock = pdtData.quantity;
-      const totalSingle = quantity * pdtData.price;
+      let totalSingle
+      if(pdtData.offerPrice){
+          totalSingle = quantity*pdtData.offerPrice
+      }else{
+          totalSingle = quantity*(pdtData.price - pdtData.discountPrice)
+      }
 
-      if (stock >= quantity) {
+      if(stock >= quantity){
           await User.updateOne(
-              { _id: userId, 'cart.productId': prodId },
+              { _id: userId, 'cart.productId' : prodId },
               {
                   $set: {
-                      'cart.$.quantity': quantity,
-                  },
+                      'cart.$.quantity' : quantity
+                  }
               }
           );
 
-          const userData = await User.findById({ _id: userId }).populate('cart.productId');
+          const userData =  await User.findById({_id: userId}).populate('cart.productId')
           let totalPrice = 0;
+          let totalDiscount = 0;
+          userData.cart.forEach(pdt => {
 
-          userData.cart.forEach((pdt) => {
-              totalPrice += pdt.productPrice * pdt.quantity;
-          });
+              totalPrice += pdt.productPrice*pdt.quantity
+              if(pdt.productId.offerPrice){
+                  totalDiscount += (pdt.productPrice - pdt.productId.offerPrice)*quantity
+              }else{
+                  totalDiscount += pdt.discountPrice*pdt.quantity
+              }
+          })
 
           res.json({
               status: true,
-              data: { totalSingle, totalPrice },
-          });
-      } else {
+              data: { totalSingle, totalPrice, totalDiscount }
+          })
+      }else{
           res.json({
               status: false,
-              data: 'Sorry, the product stock has been exceeded',
-          });
+              data: 'Sorry the product stock has been exceeded'
+          })
       }
   } catch (error) {
       next(error);
   }
-};
-
+}
 
 
 
@@ -728,11 +747,12 @@ const loadWalletHistory = async(req, res, next) => {
       const userId = req.session.userId;
       const userData = await User.findById({_id: userId})
       const walletHistory = userData.walletHistory.reverse()
-      res.render('walletHistory',{isLoggedIn:true, userData,walletHistory, page:'Profile'})
+      res.render('walletHistory',{isLoggedIn:true, userData, walletHistory, page:'Profile'})
   } catch (error) {
       next(error)
   }
 }
+
 
 
 const addMoneyToWallet = async(req, res, next) => {
@@ -759,6 +779,7 @@ const addMoneyToWallet = async(req, res, next) => {
       next(error)
   }
 }
+
 
 
 const loadWishlist = async(req, res, next) => {

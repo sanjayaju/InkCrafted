@@ -1,21 +1,21 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const productsSchema = mongoose.Schema({
     brand: {
         type: String,
-        required: true,
+        required: true
     },
     name: {
         type: String,
-        required: true,
+        required: true
     },
     description: {
         type: String,
-        required: true,
+        required: true
     },
     category: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Categories',
+        ref: 'Categories'
     },
     InkColor: {
         type: String,
@@ -25,46 +25,64 @@ const productsSchema = mongoose.Schema({
        
     price: {
         type: Number,
-        required: true,
+        required: true
+    },
+    discountPrice: {
+        type: Number,
+        required: false, 
     },
     quantity: {
-        type: Number,
+        type: Number
     },
     images: {
         type: Array,
-        required: true,
+        required: true
     },
     isListed: {
-        type: Boolean,
-        default: true,
+        type : Boolean,
+        default: true
     },
-    reviews: [
-        {
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
-            },
-            title: {
-                type: String,
-            },
-            description: {
-                type: String,
-            },
-            rating: {
-                type: Number,
-            },
-            createdAt: {
-                type: Date,
-            },
+    reviews:[{
+        userId:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
         },
-    ],
-    totalRating: {
+        title:{
+            type: String
+        },
+        description:{
+            type: String
+        },
+        rating:{
+            type: Number
+        },
+        createdAt:{
+            type: Date
+        }
+    }],
+    totalRating:{
         type: Number,
-        default: 0,
+        default: 0
     },
+    offerType: {
+        type: String,
+        enum: ['Offers', 'BrandOffers'],
+        required: function(){
+            this.offer !== ''
+        }
+    },
+    offer:{
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'offerType'
+    },
+    offerPrice: { type: Number },
+    offerAppliedBy: { 
+        type: String
+    }
 },
 {
-    timestamps: true,
-});
+    timestamps:true,
+})
 
-module.exports = mongoose.model('Products', productsSchema);
+
+module.exports = mongoose.model('Products',productsSchema)

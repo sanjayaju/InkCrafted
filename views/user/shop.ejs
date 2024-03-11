@@ -5,20 +5,12 @@
 <!-- Shop Section Begin -->
 <section class="shop spad">
     <div class="container">
-         <!-- Add the search form here
-         <div class="row mb-3">
-            <div class="col-lg-12">
-                <form action="/shop" method="GET">
-                    <input type="text" name="search" placeholder="Search...">
-                    <button type="submit">Search</button>
-                </form>
-            </div>
-        </div> -->
         <div class="row">
             <div class="col-lg-3">
                 <div class="shop__sidebar">
                     <div class="shop__sidebar__accordion">
                         <div class="accordion" id="accordionExample">
+                            <!-- Categories Section -->
                             <div class="card">
                                 <div class="card-heading">
                                     <a data-toggle="collapse" data-target="#collapseOne">Categories</a>
@@ -43,7 +35,7 @@
                                     </div>
                                 </div>
                             </div>
-
+    
                             <div class="card">
                                 <div class="card-heading">
                                     <a data-toggle="collapse" data-target="#collapseTwo">Branding</a>
@@ -68,7 +60,7 @@
                                     </div>
                                 </div>
                             </div>
-
+    
                             <!-- InkColor Section -->
                             <div class="card">
                                 <div class="card-heading">
@@ -145,11 +137,6 @@
                                             }
                                             %>
                                         </li>
-                                        <!-- <li>
-                                            <a class="btn btn-dark product-overview-btn" data-product-id="<%= pdtsData[i]._id %>">
-                                                <i class="bi bi-search"></i>
-                                            </a>
-                                        </li> -->
                                     </ul>
                                 </div>
                                 <div class="product__item__text">
@@ -173,9 +160,8 @@
                             </div>
                         </div>
                     <% } %>
-                    
                 </div>
-
+    
                 <!-- Pagination  -->
                 <div class="row">
                     <div class="col-lg-12">
@@ -188,12 +174,12 @@
                         </div>
                     </div>
                 </div>
-                
             </div>
         </div>
     </div>
 </section>
 <!-- Shop Section End -->
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const productClickable = document.querySelectorAll('.product-clickable');
@@ -206,5 +192,6 @@
         });
     });
 </script>
+
 <%- include('../partials/script.ejs') %>
 <%- include('../partials/footer.ejs') %>

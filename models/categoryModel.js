@@ -13,6 +13,10 @@ const categoySchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    offer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offers',
+    }
 },
 {
     timestamps: true

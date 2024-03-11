@@ -2,22 +2,31 @@ const Products = require('../models/productModel')
 const Categories = require('../models/categoryModel');
 const User = require('../models/userModel')
 const Orders =  require('../models/orderModel')
+const Offers = require('../models/offerModel')
 const fs = require('fs')
 const path = require('path')
 
 
 
 
-
 const loadProduct = async (req, res, next) => {
     try {
-        const pdtsData = await Products.find().populate("category");
-        console.log('pdtsData',pdtsData);
-        res.render('products', { pdtsData, page: 'Products' });
+        const pdtsData = await Products.find().populate("category").populate('offer');
+
+        const offerData = await Offers.find({
+            $or: [
+                { status: 'Starting Soon' },
+                { status: 'Available' }
+            ]
+        });
+
+        res.render('products', { pdtsData, offerData, page: 'Products' });
     } catch (error) {
+        console.error('Error in loadProduct:', error);
         next(error);
     }
-}
+};
+
 
 
 const loadAddProduct = async(req, res, next) => {
@@ -33,7 +42,7 @@ const addProductDetails = async (req, res, next) => {
     try {
         const {
             brand, productName, category,
-            InkColor, quantity, price, description,
+            InkColor, quantity, price, dprice, description,
         } = req.body;
 
         console.log(req.files);
@@ -46,30 +55,21 @@ const addProductDetails = async (req, res, next) => {
         console.log('Category Name1:', category);
         
         // Use findOne instead of find to get a single category
-        const catData = await Categories.findOne({ name: category.trim() });
-
+        
+        const catData = await Categories.find({name: category});
         console.log(catData);
-        if (!catData) {
-            return res.status(400).json({ error: 'Invalid category', category: req.body.category });
-        }
-
-        console.log('Category Name:', category);
-
         const prodData = await new Products({
-            brand,
-            name: productName,
-            description,
-            category: catData._id,
-            InkColor: req.body.InkColor, 
-            price,
-            quantity,
-            images,
-            createdAt: new Date(),
+            brand, name:productName, description, category : catData[0]._id,
+            price, discountPrice: dprice, quantity ,  InkColor: req.body.InkColor,  images, createdAt : new Date()
         }).save();
         
+    
+        
+        console.log('Product added successfully. Redirecting to /admin/products');
         res.redirect('/admin/products');
         
     } catch (error) {
+        console.error('Error in addProductDetails:', error);
         next(error);
     }
 };
@@ -89,7 +89,7 @@ const loadEditProduct = async(req, res, next) => {
 
 const postEditProduct  = async(req,res,next)=>{
     try{
-        const { id, productName, category, inkColor, quantity, price, description } = req.body;
+        const { id, productName, category, inkColor, quantity, price,dprice, description } = req.body;
 
         const brand = req.body.brand.toUpperCase()
 
@@ -118,10 +118,13 @@ const postEditProduct  = async(req,res,next)=>{
                   quantity,
                   description,
                   price,
+                  discountPrice: dprice,
                   InkColor: inkColor, 
                },
             }
          )
+         console.log('Discount Price Type:', typeof dprice);
+         console.log('Discount Price Value:', dprice);
          console.log('Product updated successfully');
         res.redirect('/admin/products')
         console.log("NOt updated ");
@@ -184,7 +187,7 @@ const loadShop = async (req, res, next) => {
         console.log("Search Parameter from Request:", req.query.search);
 
         let search = req.query.search || '';
-        
+
         console.log("Search Query:", search);
 
         async function getCategoryIds(search) {
@@ -245,37 +248,55 @@ const loadShop = async (req, res, next) => {
             query.brand = req.query.brand;
         }
 
-        let sortValue = req.query.sortValue || 1;
-
-        let pdtsData;
-        if (sortValue == 1) {
-            pdtsData = await Products.find(query)
-                .populate('category')
-                .sort({ createdAt: -1 })
-                .limit(limit * 1)
-                .skip((page - 1) * limit);
-        } else {
-            pdtsData = await Products.find(query)
-                .populate('category');
-
-            pdtsData.forEach((pdt) => {
-                pdt.actualPrice = pdt.price;
-            });
-
-            if (sortValue == 2) {
-                pdtsData.sort((a, b) => {
-                    return a.actualPrice - b.actualPrice;
-                });
-            } else if (sortValue == 3) {
-                pdtsData.sort((a, b) => {
-                    return b.actualPrice - a.actualPrice;
-                });
-            }
-
-            pdtsData = pdtsData.slice((page - 1) * limit, page * limit);
-            console.log('Sorted and Paginated pdtsData:', pdtsData);
+        
+        let sortValue = 1;
+        if(req.query.sortValue){
+            sortValue = req.query.sortValue;
         }
 
+        // console.log('pdtsDatass:', pdtsData);
+
+        let pdtsData;
+        if(sortValue == 1){
+            pdtsData = await Products.find(query).populate('category').populate('offer').sort({ createdAt: -1 }).limit(limit*1).skip( (page - 1)*limit );
+
+        }else{
+
+            pdtsData = await Products.find(query).populate('category').populate('offer')
+            pdtsData.forEach((pdt) => {
+                console.log('Price:', pdt.price);
+                console.log('Discount Price:', pdt.discountPrice);
+                if (pdt.offerPrice) {
+                    pdt.actualPrice = pdt.offerPrice;
+                    console.log('Actual Price (Offer):', pdt.actualPrice);
+                } else {
+                    pdt.actualPrice = pdt.price - pdt.discountPrice;
+                    console.log('Actual Price (Regular):', pdt.actualPrice);
+                }
+                
+            });
+            
+
+            if(sortValue == 2){
+                //sorting ascending order of actualPrice
+                pdtsData.sort( (a,b) => {
+                    return a.actualPrice - b.actualPrice;
+                });
+
+            }else if(sortValue == 3){
+
+                //sorting descending order of actualPrice
+                pdtsData.sort( (a,b) => {
+                    return b.actualPrice - a.actualPrice;
+                });
+
+            }
+            console.log('pdtsData:', pdtsData);
+
+
+            pdtsData = pdtsData.slice((page - 1) * limit, page * limit);
+
+        }
         const categoryNames = await Categories.find({});
         const brands = await Products.aggregate([
             {
@@ -327,6 +348,7 @@ const loadShop = async (req, res, next) => {
 };
 
 
+
 const loadProductOverview = async (req, res, next) => {
     try {
         const id = req.params.id;
@@ -360,25 +382,28 @@ const loadProductOverview = async (req, res, next) => {
         }
 
         // Calculate current price without discountPrice and offerPrice
-        const currPrice = pdtData.price;
+        let currPrice = 0;
+        if (pdtData.offer) {
+            currPrice = parseFloat(pdtData.offerPrice);
+        } else {
+            currPrice = pdtData.price - parseInt(pdtData.discountPrice);
+        }
+        
 
-        const discountPercentage = Math.floor(100 - ((currPrice * 100) / pdtData.price));
+        const discountPercentage = Math.floor( 100 - ( (currPrice*100) / pdtData.price ) )
 
-        res.render('productOverview', {
-            pdtData,
-            parentPage: 'Shop',
-            page: 'Product Overview',
-            isLoggedIn,
-            isPdtAWish,
-            isPdtExistInCart,
-            isUserReviewed,
-            currPrice,
-            discountPercentage,
+        res.render('productOverview',{
+            pdtData, parentPage : 'Shop', 
+            page: 'Product Overview',isLoggedIn, 
+            isPdtAWish, isPdtExistInCart, 
+            isUserReviewed, currPrice, discountPercentage
         });
+
+
     } catch (error) {
-        next(error);
+                next(error);
     }
-};
+}
 
 const loadAddReview = async(req, res, next) => {
     try {
@@ -501,6 +526,82 @@ const loadAllReviews = async(req, res, next) => {
         next(error)
     }
 }
+const applyProductOffer = async (req, res, next) => {
+    try {
+        console.log('applyProductOffer function called.');
+        const { offerId, productId } = req.body;
+        console.log('Offer ID:', offerId);
+        console.log('Product ID:', productId);
+
+        const product = await Products.findById({ _id: productId });
+        const offerData = await Offers.findById({ _id: offerId });
+
+        if (!product || !offerData) {
+            // Handle invalid product or offer data
+            return res.status(400).send('Invalid product or offer data.');
+        }
+
+        // Ensure discountPrice is defined, set it to 0 if it's undefined
+        
+        
+        console.log('Offer Data:', offerData);
+        console.log('Product Price:', product.price);
+console.log('Product Discount Price:', product.discountPrice);
+
+        const actualPrice = product.price - (product.discountPrice || 0);
+        console.log('Actual Price:', actualPrice);
+        let offerPrice = 0;
+        console.log('Offer Discount:', offerData.discount);
+        if (offerData.status === 'Available') {
+            offerPrice = Math.round(actualPrice - (actualPrice * (offerData.discount / 100)));
+        }
+
+        await Products.findByIdAndUpdate(
+            { _id: productId },
+            {
+                $set: {
+                    offerPrice,
+                    offerType: 'Offers',
+                    offer: offerId,
+                    offerAppliedBy: 'Product'
+                }
+            }
+        );
+
+        console.log('Product offer applied successfully.');
+        res.redirect('/admin/products');
+    } catch (error) {
+        console.error('Error applying product offer:', error);
+        next(error);
+    }
+};
+
+
+const removeProductOffer = async(req, res, next) => {
+    try {
+        const { productId } = req.params
+        await Products.findByIdAndUpdate(
+            {_id: productId},
+            {
+                $unset:{
+                    offer:'',
+                    offerType: '',
+                    offerPrice:'',
+                    offerAppliedBy:''
+                }
+            }
+        );
+
+        res.redirect('/admin/products')
+
+    } catch (error) {
+        next(error)
+    }
+} 
+
+
+
+
 
 
 
@@ -518,6 +619,8 @@ module.exports = {
     postAddReview,
     loadEditReview,
     postEditReview,
-    loadAllReviews
+    loadAllReviews,
+    applyProductOffer,
+    removeProductOffer
 }
 

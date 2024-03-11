@@ -25,8 +25,10 @@ const loadCheckout = async(req, res, next) => {
             return redirect('/shoppingCart')
         }
 
+        const walletBalance = userData.wallet;
+
        
-        res.render('checkout',{isLoggedIn : true, page:'Checkout', userAddress, cart,userId})
+        res.render('checkout',{isLoggedIn : true, page:'Checkout', userAddress, walletBalance, cart,userId})
     } catch (error) {
         next(error);
     }
@@ -34,57 +36,136 @@ const loadCheckout = async(req, res, next) => {
 
 console.log(" before entering place order");
 const placeOrder = async (req, res, next) => {
-    console.log("in the place order");
     try {
-        // getting details needed
+        // Extracting necessary details from the request
         const addressId = req.body.address;
         const paymentMethod = req.body.payment;
+        const isWalletSelected = req.body.walletCheckBox;
         const userId = req.session.userId;
 
-        // getting selected address
+        // Fetching selected address from the user's addresses
         const userAddress = await Addresses.findOne({ userId });
-        const address = userAddress.addresses.find(
-            (obj) => obj._id.toString() === addressId
-        );
+        const address = userAddress.addresses.find(obj => obj._id.toString() === addressId);
         req.session.deliveryAddress = address;
 
-        // getting cart items
-        const userData = await User.findById({ _id: userId }).populate(
-            'cart.productId'
-        );
+        // Fetching cart items and other user data
+        const userData = await User.findById(userId).populate('cart.productId');
         const cart = userData.cart;
+        const walletAmount = req.session.walletAmount = parseInt(userData.wallet);
         req.session.cart = cart;
 
         let products = [];
 
+        // Constructing the products array with details for each item in the cart
         cart.forEach((pdt) => {
+            let discountPrice;
+            let totalDiscount;
+        
+            if (pdt.productId.offerPrice !== undefined && !isNaN(pdt.productId.offerPrice)) {
+                discountPrice = pdt.productId.price - pdt.productId.offerPrice;
+            } else {
+                discountPrice = pdt.discountPrice !== undefined && !isNaN(pdt.discountPrice) ? pdt.discountPrice : pdt.productId.price;
+            }
+        
+            totalDiscount = discountPrice * pdt.quantity;
             const product = {
                 productId: pdt.productId._id,
                 productName: pdt.productId.name,
                 productPrice: pdt.productId.price,
+                discountPrice,
                 quantity: pdt.quantity,
                 totalPrice: pdt.quantity * pdt.productId.price,
-                status: 'Order Confirmed',
+                totalDiscount,
+                status: 'Order Confirmed'
             };
+
             products.push(product);
         });
 
         req.session.products = products;
-
         let totalPrice = 0;
+
+
         if (cart.length) {
-            // Finding total price
-            for (let i = 0; i < products.length; i++) {
-                totalPrice += products[i].totalPrice;
+            // Calculating the total price
+            for (const product of products) {
+                const productTotalPrice = product.totalPrice;
+                const productTotalDiscount = product.totalDiscount;
+        
+                console.log(`Product: ${product.productName}, Total Price = ${productTotalPrice}, Total Discount = ${productTotalDiscount}`);
+        
+                totalPrice += (productTotalPrice - productTotalDiscount);
             }
-            console.log(totalPrice);
-
+        
+            console.log('Total Price:', totalPrice);
+        
+            req.session.isWalletSelected = isWalletSelected;
             req.session.totalPrice = totalPrice;
-            console.log(totalPrice);
-
+        }
+        
+        
+        if (cart.length) {
             if (paymentMethod === 'COD') {
                 console.log('Payment method is COD');
 
+                try {
+                    // Saving the order
+                    await new Orders({
+                        userId,
+                        deliveryAddress: address,
+                        totalPrice,
+                        products,
+                        paymentMethod,
+                        status: 'Order Confirmed',
+                    }).save();
+
+                    // Updating product quantities in Products Collection
+                    for (const { productId, quantity } of cart) {
+                        await Products.updateOne(
+                            { _id: productId._id },
+                            { $inc: { quantity: -quantity } }
+                        );
+                    }
+
+                    // Deleting the cart from the user's collection
+                    await User.findByIdAndUpdate(
+                        { _id: userId },
+                        { $set: { cart: [] } }
+                    );
+
+                    req.session.cartCount = 0;
+
+                    res.json({ status: 'COD' });
+                } catch (orderSaveError) {
+                    console.error('Error saving order:', orderSaveError);
+                    res.status(500).json({ status: 'Error', message: 'Failed to save order' });
+                }
+            } else if (paymentMethod === 'Razorpay') {
+                console.log('Payment method is Razorpay');
+
+                if (isWalletSelected) {
+                    totalPrice -= walletAmount;
+                }
+
+                // Your existing Razorpay integration logic here...
+                var options = {
+                    amount: totalPrice * 100,
+                    currency: 'INR',
+                    receipt: "hello"
+                };
+
+                instance.orders.create(options, (err, order) => {
+                    if (err) {
+                        console.log(err);
+                        res.status(500).json({ status: 'Error', message: 'Failed to create Razorpay order' });
+                    } else {
+                        res.json({ status: 'Razorpay', order: order });
+                    }
+                });
+            } else if (paymentMethod === 'Wallet') {
+                console.log('Payment method is Wallet');
+
+                // Your existing Wallet logic here...
                 await new Orders({
                     userId,
                     deliveryAddress: address,
@@ -94,7 +175,7 @@ const placeOrder = async (req, res, next) => {
                     status: 'Order Confirmed',
                 }).save();
 
-                // Reducing quantity/stock of purchased products from Products Collection
+                // Updating product quantities in Products Collection
                 for (const { productId, quantity } of cart) {
                     await Products.updateOne(
                         { _id: productId._id },
@@ -102,42 +183,36 @@ const placeOrder = async (req, res, next) => {
                     );
                 }
 
-                // Deleting Cart from user collection
+                // Deleting the cart from the user's collection
                 await User.findByIdAndUpdate(
                     { _id: userId },
-                    {
-                        $set: {
-                            cart: [],
-                        },
-                    }
+                    { $set: { cart: [] } }
                 );
 
                 req.session.cartCount = 0;
-                res.json({ status: 'COD' });
-            } else if (paymentMethod === 'Razorpay') {
-                console.log('Payment method razorpay');
 
-                var options = {
-                    amount: totalPrice * 100,
-                    currency: 'INR',
-                    receipt: 'hello',
+                const walletHistory = {
+                    date: new Date(),
+                    amount: -totalPrice,
+                    message: 'Product Purchase'
                 };
-                instance.orders.create(options, (err, order) => {
-                    if (err) {
-                        console.log('Razorpay error:', err);
-                    } else {
-                        console.log('Razorpay order:', order);
-                        res.json({ status: 'Razorpay', order: order });
+
+                // Decrementing wallet amount
+                await User.findByIdAndUpdate(
+                    { _id: userId },
+                    {
+                        $inc: { wallet: -totalPrice },
+                        $push: { walletHistory }
                     }
-                });
-                
+                );
+
+                res.json({ status: 'Wallet' });
             }
         } else {
             console.log('Cart is empty');
             res.redirect('/shop');
         }
     } catch (error) {
-        console.error(error);
         next(error);
     }
 };
@@ -166,7 +241,21 @@ const verifyPayment = async (req, res, next) => {
                 status: 'Order Confirmed',
             }).save();
 
-            // Reducing quantity/stock of purchased products from Products Collection
+            if (req.session.isWalletSelected) {
+                const userData = await User.findById({ _id: userId });
+                userData.walletHistory.push(
+                    {
+                        date: new Date(),
+                        amount: userData.wallet,
+                        message: 'Product Purchase'
+                    }
+                );
+
+                userData.wallet = 0;
+                await userData.save();
+            }
+
+            //Reducing quantity/stock of purchased products from Products Collection
             const cart = req.session.cart;
             for (const { productId, quantity } of cart) {
                 await Products.updateOne(
@@ -175,7 +264,7 @@ const verifyPayment = async (req, res, next) => {
                 );
             }
 
-            // Deleting Cart from user collection
+            //Deleting Cart from user collection
             await User.findByIdAndUpdate(
                 { _id: userId },
                 {
@@ -196,7 +285,6 @@ const verifyPayment = async (req, res, next) => {
         next(error);
     }
 };
-
 
 const loadMyOrders = async(req, res, next) => {
     try {
@@ -310,191 +398,7 @@ const loadOrdersList = async(req, res, next) => {
 }
 
 
-// const changeOrderStatus = async(req,res, next) => {
-//     console.log('Entering changeOrderStatus');
-//     res.send('Hello from changeOrderStatus');
-//     try {
-//         const orderId = req.body.orderId
-//         const status = req.body.status
-//         const orderData = await Orders.findById({_id: orderId})
-//         for (const pdt of orderData.products){
 
-//             if(pdt.status !== 'Delivered' && 
-//                 pdt.status !== 'Pending Return Approval' &&
-//                 pdt.status !== 'Cancelled' && 
-//                 pdt.status !== 'Cancelled By Admin' && 
-//                 pdt.status !== 'Returned'
-//             ){
-//                 pdt.status = status
-//             }
-
-//         };
-//         console.log('Before orderData.save()');
-//         await orderData.save();
-
-//         console.log('Before updateOrderStatus');
-//         await updateOrderStatus(orderId, next);
-
-//         console.log('Before res.redirect');
-//         res.redirect('/admin/ordersList');
-//     } catch (error) {
-//         console.error('Error in changeOrderStatus:', error);
-//         next(error);
-//     }
-// }
-
-// const updateOrderStatus = async function (orderId, next) {
-//     try {
-//         // Step 1: Initialize an array to store status counts
-//         let statusCounts = [];
-
-//         // Step 2: Find the order data by its ID
-//         const orderData = await Orders.findById({ _id: orderId });
-
-//         // Step 3: Count the occurrences of each status in the order's products
-//         orderData.products.forEach((pdt) => {
-//             let eachStatusCount = {
-//                 status: pdt.status,
-//                 count: 1,
-//             };
-
-//             let existingStatusIndex = statusCounts.findIndex(
-//                 (item) => item.status === pdt.status
-//             );
-
-//             if (existingStatusIndex !== -1) {
-//                 // Increment the count of an existing status
-//                 statusCounts[existingStatusIndex].count += 1;
-//             } else {
-//                 statusCounts.push(eachStatusCount);
-//             }
-//         });
-
-//         // Step 4: Check if there is only one status, set order status to that status, and save
-//         if (statusCounts.length === 1) {
-//             orderData.status = statusCounts[0].status;
-//             await orderData.save();
-//             return;
-//         }
-
-//         // Step 5: Check for specific status conditions and update order status accordingly
-//         // Check if 'Order Confirmed' exists
-//         let isOrderConfirmedExists = false;
-//         // Check if 'Shipped' exists
-//         let isShippedExists = false;
-//         // Check if 'Out For Delivery' exists
-//         let isOutForDeliveryExists = false;
-//         // Check if 'Delivered' exists
-//         let isDeliveredExists = false;
-//         // Count of 'Cancelled' status by user
-//         let cancelledByUserCount;
-//         // Count of 'Cancelled By Admin' status
-//         let cancelledByAdminCount;
-//         // Count of 'Pending Return Approval' status
-//         let returnApprovalCount;
-//         // Count of 'Returned' status
-//         let returnedCount;
-
-//         // Iterate through status counts to set flags and counts
-//         statusCounts.forEach((item) => {
-//             if (item.status === 'Order Confirmed') {
-//                 isOrderConfirmedExists = true;
-//             }
-
-//             if (item.status === 'Shipped') {
-//                 isShippedExists = true;
-//             }
-
-//             if (item.status === 'Out For Delivery') {
-//                 isOutForDeliveryExists = true;
-//             }
-
-//             if (item.status === 'Delivered') {
-//                 isDeliveredExists = true;
-//             }
-
-//             if (item.status === 'Cancelled') {
-//                 cancelledByUserCount = item.count;
-//             }
-
-//             if (item.status === 'Cancelled By Admin') {
-//                 cancelledByAdminCount = item.count;
-//             }
-
-//             if (item.status === 'Pending Return Approval') {
-//                 returnApprovalCount = item.count;
-//             }
-
-//             if (item.status === 'Returned') {
-//                 returnedCount = item.count;
-//             }
-//         });
-
-//         // Step 6: Update order status based on specific conditions
-//         // ...
-
-//         if(isOrderConfirmedExists){
-//             orderData.status = 'Order Confirmed'
-//             await orderData.save()
-//             return
-//         }
-        
-//         if(isShippedExists){
-//             orderData.status = 'Shipped'
-//             await orderData.save()
-//             return
-//         }
-
-//         if(isOutForDeliveryExists){
-//             orderData.status = 'Out For Delivery'
-//             await orderData.save()
-//             return
-//         }
-
-
-//         if(isDeliveredExists){
-//             orderData.status = 'Delivered'
-//             await orderData.save()
-//             return
-//         }
-
-//         let cancelledCount = 0;
-//         if(cancelledByUserCount){
-//             cancelledCount += cancelledByUserCount
-//         }
-//         if(cancelledByAdminCount){
-//             cancelledCount += cancelledByAdminCount
-//         }
-
-//         if(cancelledByUserCount === orderData.products.length || cancelledCount === orderData.products.length){
-//             orderData.status = 'Cancelled'
-//             await orderData.save()
-//             return;
-//         }
-        
-//         if(cancelledByAdminCount === orderData.products.length){
-//             orderData.status = 'Cancelled By Admin'
-//             await orderData.save()
-//             return;
-//         }
-
-//         if( cancelledCount + returnApprovalCount + returnedCount === orderData.products.length){
-//             orderData.status = 'Pending Return Approval'
-//             await orderData.save()
-//             return;
-//         }
-
-//         if( cancelledCount + returnedCount === orderData.products.length){
-//             orderData.status = 'Returned'
-//             await orderData.save()
-//             return;
-//         }
-
-
-//     } catch (error) {
-//         next(error);
-//     }
-// };
 
 
 const changeOrderStatus = async(req,res, next) => {
@@ -683,7 +587,8 @@ const cancelOrder = async (req, res, next) => {
                     pdt.status !== 'Returned'
                 ) {
                     pdt.status = 'Cancelled';
-                    refundAmount += pdt.totalPrice; // Assuming no discounts, coupons, or wallet deductions
+                    refundAmount = refundAmount + (pdt.totalPrice - pdt.totalDiscount)
+
 
                     // Incrementing Product Stock
                     await Products.findByIdAndUpdate(
@@ -710,8 +615,7 @@ const cancelOrder = async (req, res, next) => {
                     pdt.status !== 'Returned'
                 ) {
                     pdt.status = 'Cancelled By Admin';
-                    refundAmount += pdt.totalPrice; // Assuming no discounts, coupons, or wallet deductions
-
+                    refundAmount = refundAmount + (pdt.totalPrice - pdt.totalDiscount)
                     // Incrementing Product Stock
                     await Products.findByIdAndUpdate(
                         { _id: pdt.productId },
@@ -762,7 +666,6 @@ const cancelSinglePdt = async(req, res, next) => {
                 }
                 
                 refundAmount = pdt.totalPrice - pdt.totalDiscount;
-
                 //Incrementing Product Stock
                 await Products.findByIdAndUpdate(
                     {_id: pdt.productId},

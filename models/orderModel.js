@@ -28,16 +28,25 @@ const orderSchema = mongoose.Schema({
             type:Number,
             required:true
         },
-       
+        discountPrice:{
+            type:Number,
+            required:true
+        },
         quantity:{
             type:Number,
             required:true
         },
         totalPrice:{
-            type:Number,
+            type:String,
             required:true
         },
-        
+        totalDiscount:{
+            type:String,
+            required:true
+        },    
+        offerId:{
+            type:String
+        },
         status:{
             type: String,
             enum: ['Order Confirmed', 'Shipped', 
@@ -48,7 +57,7 @@ const orderSchema = mongoose.Schema({
     }],
     paymentMethod:{
         type : String,
-        enum: [ 'COD','Razorpay'],
+        enum: [ 'COD', 'Razorpay', 'Wallet' ],
         required: true
     },
     status:{
@@ -67,4 +76,3 @@ const orderSchema = mongoose.Schema({
 
 
 module.exports = mongoose.model('Orders',orderSchema);
-

@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const Products = require('../models/productModel');
 const Addresses = require('../models/addressModel');
 const Orders = require('../models/orderModel');
+const Coupons = require('../models/couponModel');
 require('dotenv').config()
 const Razorpay = require('razorpay');
 const { updateWallet } = require('../helpers/helpersFunctions')
@@ -26,9 +27,10 @@ const loadCheckout = async(req, res, next) => {
         }
 
         const walletBalance = userData.wallet;
+        const coupons = await Coupons.findByIsCancelled(false)
 
        
-        res.render('checkout',{isLoggedIn : true, page:'Checkout', userAddress, walletBalance, cart,userId})
+        res.render('checkout',{isLoggedIn : true, page:'Checkout', userAddress, walletBalance, coupons, cart,userId})
     } catch (error) {
         next(error);
     }
@@ -98,6 +100,33 @@ const placeOrder = async (req, res, next) => {
             }
         
             console.log('Total Price:', totalPrice);
+
+            let couponCode = '';
+            let couponDiscount = 0;
+            let couponDiscountType;
+            if(req.session.coupon){
+
+                const coupon = req.session.coupon
+                couponCode = coupon.code
+                couponDiscount = coupon.discountAmount
+
+                if(coupon.discountType === 'Percentage'){
+
+                    couponDiscountType = 'Percentage';
+                    const reducePrice =  totalPrice * (couponDiscount / 100)
+
+                    if(reducePrice >= coupon.maxDiscountAmount){
+                        totalPrice -= coupon.maxDiscountAmount
+                    }else{
+                        totalPrice -= reducePrice
+                    }
+
+                }else{
+                    couponDiscountType = 'Fixed Amount';
+                    totalPrice = totalPrice - couponDiscount
+                }
+                
+            }
         
             req.session.isWalletSelected = isWalletSelected;
             req.session.totalPrice = totalPrice;
@@ -117,6 +146,9 @@ const placeOrder = async (req, res, next) => {
                         products,
                         paymentMethod,
                         status: 'Order Confirmed',
+                        couponCode,
+                        couponDiscount,
+                        couponDiscountType
                     }).save();
 
                     // Updating product quantities in Products Collection
@@ -126,6 +158,19 @@ const placeOrder = async (req, res, next) => {
                             { $inc: { quantity: -quantity } }
                         );
                     }
+
+                    
+                //Adding user to usedUsers list in Coupons collection
+                if(req.session.coupon != null){
+                    await Coupons.findByIdAndUpdate(
+                        {_id:req.session.coupon._id},
+                        {
+                            $push:{
+                                usedUsers: userId
+                            }
+                        }
+                    )
+                }
 
                     // Deleting the cart from the user's collection
                     await User.findByIdAndUpdate(
@@ -173,6 +218,9 @@ const placeOrder = async (req, res, next) => {
                     products,
                     paymentMethod,
                     status: 'Order Confirmed',
+                    couponCode,
+                    couponDiscount,
+                    couponDiscountType
                 }).save();
 
                 // Updating product quantities in Products Collection
@@ -188,6 +236,19 @@ const placeOrder = async (req, res, next) => {
                     { _id: userId },
                     { $set: { cart: [] } }
                 );
+
+                       //Adding user to usedUsers list in Coupons collection
+                       if(req.session.coupon != null){
+                        await Coupons.findByIdAndUpdate(
+                            {_id:req.session.coupon._id},
+                            {
+                                $push:{
+                                    usedUsers: userId
+                                }
+                            }
+                        )
+                    }
+        
 
                 req.session.cartCount = 0;
 
@@ -232,6 +293,17 @@ const verifyPayment = async (req, res, next) => {
 
             let totalPrice = req.session.totalPrice;
 
+            const coupon = req.session.coupon
+            let couponCode = '';
+            let couponDiscount = 0;
+            let couponDiscountType;
+            if(coupon){
+                couponCode = coupon.code
+                couponDiscount = coupon.discountAmount
+                couponDiscountType = coupon.discountType
+            }
+
+
             await new Orders({
                 userId,
                 deliveryAddress: req.session.deliveryAddress,
@@ -239,6 +311,10 @@ const verifyPayment = async (req, res, next) => {
                 products: req.session.products,
                 paymentMethod: 'Razorpay',
                 status: 'Order Confirmed',
+
+                couponCode,
+                couponDiscount,
+                couponDiscountType
             }).save();
 
             if (req.session.isWalletSelected) {
@@ -263,6 +339,18 @@ const verifyPayment = async (req, res, next) => {
                     { $inc: { quantity: -quantity } }
                 );
             }
+
+                //Adding user to usedUsers list in Coupons collection
+                if(coupon != null){
+                    await Coupons.findByIdAndUpdate(
+                        {_id:req.session.coupon._id},
+                        {
+                            $push:{
+                                usedUsers: userId
+                            }
+                        }
+                    )
+                }
 
             //Deleting Cart from user collection
             await User.findByIdAndUpdate(
@@ -718,6 +806,29 @@ const returnOrder = async(req, res, next) => {
                 next(error);
     }
 }
+
+const returnSinglePdt = async(req, res, next) => {
+    try {
+        const { orderId, pdtId } = req.params
+        const orderData = await Orders.findById({_id: orderId})
+        
+        for( const pdt of orderData.products){
+            if(pdt._id == pdtId){
+                pdt.status = 'Pending Return Approval'
+                break;
+            }
+        }
+
+        await orderData.save()
+        await updateOrderStatus(orderId, next);
+
+        res.redirect(`/viewOrderDetails/${orderId}`)
+
+    } catch (error) {
+        next(error)
+    }
+}
+
 const approveReturn = async(req,res,next) => {
     try {
         const orderId = req.params.orderId;
@@ -761,6 +872,47 @@ const approveReturn = async(req,res,next) => {
 }
 
 
+const approveReturnForSinglePdt = async(req, res, next) => {
+    try {
+        const { orderId, pdtId } = req.params
+        const orderData = await Orders.findById({_id: orderId})
+        const userId = orderData.userId;
+
+        let refundAmount;
+        for( const pdt of orderData.products){
+            if(pdt._id == pdtId){
+
+                pdt.status = 'Returned'
+
+                refundAmount = pdt.totalPrice - pdt.totalDiscount;
+
+                //Incrementing Product Stock
+                await Products.findByIdAndUpdate(
+                    {_id: pdt.productId},
+                    {
+                        $inc:{
+                            quantity: pdt.quantity
+                        }
+                    }
+                );
+
+                break;
+            }
+        }
+
+        await orderData.save()
+        await updateOrderStatus(orderId, next);
+        await updateWallet(userId, refundAmount, 'Refund of Retrned Product')
+
+
+        res.redirect(`/admin/ordersList`)
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+
 
 module.exports = {
     loadCheckout,
@@ -776,5 +928,7 @@ module.exports = {
     cancelOrder,
     cancelSinglePdt,
     returnOrder,
-    approveReturn
+    returnSinglePdt,
+    approveReturn,
+    approveReturnForSinglePdt
 };

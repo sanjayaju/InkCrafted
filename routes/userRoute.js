@@ -3,6 +3,7 @@ const userCtrl = require('../controllers/userCtrl');
 const productCtrl = require('../controllers/productCtrl')
 const addressCtrl = require('../controllers/addressCtrl')
 const orderCtrl = require('../controllers/orderCtrl')
+const couponCtrl = require('../controllers/couponCtrl')
 const {isUserLoggedIn, isUserLoggedOut ,isUserBlocked} = require('../middleware/auth')
 
 const user_route = express();
@@ -108,9 +109,14 @@ user_route.get('/viewOrderDetails/:orderId',orderCtrl.loadViewOrderDetails)
 user_route.get('/cancelOrder/:orderId',orderCtrl.cancelOrder)
 user_route.get('/cancelSinglePrdt/:orderId/:pdtId',orderCtrl.cancelSinglePdt)
 user_route.get('/returnOrder/:orderId',orderCtrl.returnOrder)
+user_route.get('/returnSinglePrdt/:orderId/:pdtId',orderCtrl.returnSinglePdt)
 
 
 user_route.get('/profile/walletHistory',userCtrl.loadWalletHistory)
 user_route.post('/profile/addMoneyToWallet/',userCtrl.addMoneyToWallet)
+
+
+user_route.post('/applyCoupon',couponCtrl.applyCoupon);
+user_route.get('/removeCoupon',couponCtrl.removeCoupon)
 
 module.exports = user_route;

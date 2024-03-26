@@ -57,6 +57,9 @@ const placeOrder = async (req, res, next) => {
         req.session.cart = cart;
 
         let products = [];
+        let couponCode = '';
+        let couponDiscount = 0;
+        let couponDiscountType ;
 
         // Constructing the products array with details for each item in the cart
         cart.forEach((pdt) => {
@@ -87,7 +90,6 @@ const placeOrder = async (req, res, next) => {
         req.session.products = products;
         let totalPrice = 0;
 
-
         if (cart.length) {
             // Calculating the total price
             for (const product of products) {
@@ -103,35 +105,36 @@ const placeOrder = async (req, res, next) => {
 
             let couponCode = '';
             let couponDiscount = 0;
-            let couponDiscountType;
-            if(req.session.coupon){
-
-                const coupon = req.session.coupon
-                couponCode = coupon.code
-                couponDiscount = coupon.discountAmount
-
-                if(coupon.discountType === 'Percentage'){
-
+            let couponDiscountType ;
+            if (req.session.coupon) {
+                // Coupon is applied
+                const coupon = req.session.coupon;
+                couponCode = coupon.code;
+                couponDiscount = coupon.discountAmount;
+            
+                if (coupon.discountType === 'Percentage') {
                     couponDiscountType = 'Percentage';
-                    const reducePrice =  totalPrice * (couponDiscount / 100)
-
-                    if(reducePrice >= coupon.maxDiscountAmount){
-                        totalPrice -= coupon.maxDiscountAmount
-                    }else{
-                        totalPrice -= reducePrice
+                    const reducePrice =  totalPrice * (couponDiscount / 100);
+            
+                    if (reducePrice >= coupon.maxDiscountAmount) {
+                        totalPrice -= coupon.maxDiscountAmount;
+                    } else {
+                        totalPrice -= reducePrice;
                     }
-
-                }else{
+                } else {
                     couponDiscountType = 'Fixed Amount';
-                    totalPrice = totalPrice - couponDiscount
+                    totalPrice = totalPrice - couponDiscount;
                 }
-                
+            } else {
+                // No coupon applied, set couponDiscountType to undefined or remove it
+                // couponDiscountType = undefined;
+                delete couponDiscountType;
             }
+            
         
             req.session.isWalletSelected = isWalletSelected;
             req.session.totalPrice = totalPrice;
         }
-        
         
         if (cart.length) {
             if (paymentMethod === 'COD') {
@@ -159,18 +162,17 @@ const placeOrder = async (req, res, next) => {
                         );
                     }
 
-                    
-                //Adding user to usedUsers list in Coupons collection
-                if(req.session.coupon != null){
-                    await Coupons.findByIdAndUpdate(
-                        {_id:req.session.coupon._id},
-                        {
-                            $push:{
-                                usedUsers: userId
+                    // Adding user to usedUsers list in Coupons collection
+                    if (req.session.coupon != null) {
+                        await Coupons.findByIdAndUpdate(
+                            { _id: req.session.coupon._id },
+                            {
+                                $push: {
+                                    usedUsers: userId
+                                }
                             }
-                        }
-                    )
-                }
+                        );
+                    }
 
                     // Deleting the cart from the user's collection
                     await User.findByIdAndUpdate(
@@ -231,24 +233,17 @@ const placeOrder = async (req, res, next) => {
                     );
                 }
 
-                // Deleting the cart from the user's collection
-                await User.findByIdAndUpdate(
-                    { _id: userId },
-                    { $set: { cart: [] } }
-                );
-
-                       //Adding user to usedUsers list in Coupons collection
-                       if(req.session.coupon != null){
-                        await Coupons.findByIdAndUpdate(
-                            {_id:req.session.coupon._id},
-                            {
-                                $push:{
-                                    usedUsers: userId
-                                }
+                // Adding user to usedUsers list in Coupons collection
+                if (req.session.coupon != null) {
+                    await Coupons.findByIdAndUpdate(
+                        { _id: req.session.coupon._id },
+                        {
+                            $push: {
+                                usedUsers: userId
                             }
-                        )
-                    }
-        
+                        }
+                    );
+                }
 
                 req.session.cartCount = 0;
 

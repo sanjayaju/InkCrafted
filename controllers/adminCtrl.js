@@ -1,6 +1,6 @@
 const Admin = require('../models/adminModel');
  const User = require('../models/userModel');
- const bcrypt = require('bcrypt')
+ const bcryptjs = require('bcryptjs')
  const Orders  = require('../models/orderModel');
  const { getMonthName } = require('../helpers/helpersFunctions')
 const { findIncome, countSales, findSalesData, findSalesDataOfYear, findSalesDataOfMonth, formatNum } = require('../helpers/orderHelper')
@@ -197,7 +197,7 @@ const verifyAdminLogin = async (req, res, next) => {
         console.log('Retrieved admin data:', adminData);
 
         if (adminData) {
-            const passwordMatch = await bcrypt.compare(password, adminData.password);
+            const passwordMatch = await bcryptjs.compare(password, adminData.password);
             console.log('Password match:', passwordMatch);
 
             if (passwordMatch) {

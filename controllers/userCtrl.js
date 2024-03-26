@@ -3,7 +3,7 @@ const Addresses = require('../models/addressModel')
 const Products = require('../models/productModel')
 const Categories = require('../models/categoryModel')
 const Banners = require('../models/bannerModal')
-const bcrypt = require('bcrypt')
+const bcryptjs = require('bcryptjs')
 const { securePassword } = require('../helpers/generator')
 require('dotenv').config()
 const nodemailer = require('nodemailer')
@@ -53,7 +53,7 @@ const verifyLogin = async (req, res, next) => {
     const userData = await User.findOne({ email })
 
     if (userData) {
-      const passwordMatch = await bcrypt.compare(password, userData.password)
+      const passwordMatch = await bcryptjs.compare(password, userData.password)
       if (passwordMatch) {
 
         if (!userData.isBlocked) {
@@ -242,7 +242,7 @@ const validateOTP = async (req, res, next) => {
         let { fname, lname, email, mobile, password } = userdata;
 
         // Hash the password before saving
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcryptjs.hash(password, 10);
 
      
 
@@ -534,7 +534,7 @@ const postPassConfirmToChangeMail = async(req,res, next) => {
       const id = req.session.userId;
       const password = req.body.password
       const userData = await User.findById({ _id: id })
-      const passwordMatch = await bcrypt.compare(password,userData.password)
+      const passwordMatch = await bcryptjs.compare(password,userData.password)
       if(passwordMatch){
           res.redirect('/profile/changeMail')
       }else{
@@ -645,7 +645,7 @@ const postChangePassword = async (req, res, next) => {
       return res.redirect('/profile/changePassword');
     }
 
-    const passwordMatch = await bcrypt.compare(oldPassword, userData.password);
+    const passwordMatch = await bcryptjs.compare(oldPassword, userData.password);
     console.log('Password Match:', passwordMatch);
 
     // Check if the old password is correct

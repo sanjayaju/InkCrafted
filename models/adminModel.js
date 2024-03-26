@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 
 const adminSchema = new mongoose.Schema({
     email: {
@@ -25,7 +25,7 @@ adminSchema.pre('save', async function (next) {
 
         const saltRounds = 10;
         console.log('Password before hashing:', admin.password);
-        const hashedPassword = await bcrypt.hash(admin.password, saltRounds);
+        const hashedPassword = await bcryptjs.hash(admin.password, saltRounds);
         console.log('Password after hashing:', hashedPassword);
         admin.password = hashedPassword;
 

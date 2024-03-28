@@ -1,7 +1,7 @@
 const Products = require('../models/productModel')
 const Categories = require('../models/categoryModel');
 const User = require('../models/userModel')
-const Orders =  require('../models/orderModel')
+const Orders = require('../models/orderModel')
 const Offers = require('../models/offerModel')
 const fs = require('fs')
 const path = require('path')
@@ -29,13 +29,13 @@ const loadProduct = async (req, res, next) => {
 
 
 
-const loadAddProduct = async(req, res, next) => {
+const loadAddProduct = async (req, res, next) => {
     try {
         const categories = await Categories.find({ isListed: true })
-        res.render('addProduct',{categories, page:'Products'})
+        res.render('addProduct', { categories, page: 'Products' })
     } catch (error) {
-                next(error);
-    } 
+        next(error);
+    }
 }
 
 const addProductDetails = async (req, res, next) => {
@@ -53,28 +53,32 @@ const addProductDetails = async (req, res, next) => {
         }
 
         console.log('Category Name1:', category);
-        
+
         // Use findOne instead of find to get a single category
-        
-        const catData = await Categories.find({name: category});
+
+        const catData = await Categories.findOne({ name: category }); // Use findOne instead of find to get a single category
         console.log(catData);
+        if (!catData) {
+            // Handle the case where category is not found
+            throw new Error('Category not found');
+        }
+
         const prodData = await new Products({
-            brand, name:productName, description, category : catData[0]._id,
-            price, discountPrice: dprice, quantity ,  InkColor: req.body.InkColor,  images, createdAt : new Date()
+            brand, name: productName, description, category: catData._id,
+            price, discountPrice: dprice, quantity, InkColor: req.body.InkColor, images, createdAt: new Date()
         }).save();
-        
-    
-        
+
+
         console.log('Product added successfully. Redirecting to /admin/products');
         res.redirect('/admin/products');
-        
+
     } catch (error) {
         console.error('Error in addProductDetails:', error);
         next(error);
     }
 };
 
-const loadEditProduct = async(req, res, next) => {
+const loadEditProduct = async (req, res, next) => {
     try {
         const id = req.params.id;
         const pdtData = await Products.findById({ _id: id }).populate('category');
@@ -87,87 +91,87 @@ const loadEditProduct = async(req, res, next) => {
     }
 }
 
-const postEditProduct  = async(req,res,next)=>{
-    try{
-        const { id, productName, category, inkColor, quantity, price,dprice, description } = req.body;
+const postEditProduct = async (req, res, next) => {
+    try {
+        const { id, productName, category, inkColor, quantity, price, dprice, description } = req.body;
 
         const brand = req.body.brand.toUpperCase()
 
-        if (req.files){
+        if (req.files) {
             let newImages = []
-            for (let file of req.files){
+            for (let file of req.files) {
                 newImages.push(file.filename)
             }
-            console.log('id : '+id);
+            console.log('id : ' + id);
             console.log('Before findOneAndUpdate');
-            await Products.findOneAndUpdate({_id:id},{$push:{images:{$each:newImages}}})
+            await Products.findOneAndUpdate({ _id: id }, { $push: { images: { $each: newImages } } })
             console.log('After findOneAndUpdate');
 
 
         }
-        console.log('category :'+category);
-        const catData = await Categories.findOne({name:category})
+        console.log('category :' + category);
+        const catData = await Categories.findOne({ name: category })
         console.log(catData);
         await Products.findByIdAndUpdate(
             { _id: id },
             {
-               $set: {
-                  brand,
-                  name: productName,
-                  category: catData._id,
-                  quantity,
-                  description,
-                  price,
-                  discountPrice: dprice,
-                  InkColor: inkColor, 
-               },
+                $set: {
+                    brand,
+                    name: productName,
+                    category: catData._id,
+                    quantity,
+                    description,
+                    price,
+                    discountPrice: dprice,
+                    InkColor: inkColor,
+                },
             }
-         )
-         console.log('Discount Price Type:', typeof dprice);
-         console.log('Discount Price Value:', dprice);
-         console.log('Product updated successfully');
+        )
+        console.log('Discount Price Type:', typeof dprice);
+        console.log('Discount Price Value:', dprice);
+        console.log('Product updated successfully');
         res.redirect('/admin/products')
         console.log("NOt updated ");
-    }catch (error){
+    } catch (error) {
         next(error);
     }
 }
 
-const deleteProduct = async(req,res,next)=>{
-    try{
-        const id =  req.params.id;
-        const prodData = await Products.findById({_id:id})
-        prodData.isListed =!prodData.isListed
+const deleteProduct = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const prodData = await Products.findById({ _id: id })
+        prodData.isListed = !prodData.isListed
         prodData.save()
-            res.redirect('/admin/products');
-    }catch(error){
+        res.redirect('/admin/products');
+    } catch (error) {
         next(error);
     }
 }
 
-const deleteImage = async(req,res,next)=>{
-    try{
+const deleteImage = async (req, res, next) => {
+    try {
         const id = req.params.id;
         const imageURL = req.query.imageURL;
 
-        await Products.findOneAndUpdate({_id:id}, {$pull:{images:imageURL}})
+        await Products.findOneAndUpdate({ _id: id }, { $pull: { images: imageURL } })
 
-        console.log('imageURL : '+imageURL+'type : ' +typeof imageURL);
+        console.log('imageURL : ' + imageURL + 'type : ' + typeof imageURL);
 
-        const imgFolder = path.join(__dirname,'../public/images/productImages')
+        const imgFolder = path.join(__dirname, '../public/images/productImages')
 
         const files = fs.reddirSync(imgFolder);
 
-        for(const file of files ){
-            if(file === imageURL){
-                const filePath = path.join(imgFolder,file);
+        for (const file of files) {
+            if (file === imageURL) {
+                const filePath = path.join(imgFolder, file);
                 fs.unlinkSync(filePath);
                 break;
             }
         }
 
         res.redirect(`/admin/products/editProduct/${id}`);
-    }catch (error){
+    } catch (error) {
         next(error);
     }
 }
@@ -248,19 +252,19 @@ const loadShop = async (req, res, next) => {
             query.brand = req.query.brand;
         }
 
-        
+
         let sortValue = 1;
-        if(req.query.sortValue){
+        if (req.query.sortValue) {
             sortValue = req.query.sortValue;
         }
 
         // console.log('pdtsDatass:', pdtsData);
 
         let pdtsData;
-        if(sortValue == 1){
-            pdtsData = await Products.find(query).populate('category').populate('offer').sort({ createdAt: -1 }).limit(limit*1).skip( (page - 1)*limit );
+        if (sortValue == 1) {
+            pdtsData = await Products.find(query).populate('category').populate('offer').sort({ createdAt: -1 }).limit(limit * 1).skip((page - 1) * limit);
 
-        }else{
+        } else {
 
             pdtsData = await Products.find(query).populate('category').populate('offer')
             pdtsData.forEach((pdt) => {
@@ -273,20 +277,20 @@ const loadShop = async (req, res, next) => {
                     pdt.actualPrice = pdt.price - pdt.discountPrice;
                     console.log('Actual Price (Regular):', pdt.actualPrice);
                 }
-                
-            });
-            
 
-            if(sortValue == 2){
+            });
+
+
+            if (sortValue == 2) {
                 //sorting ascending order of actualPrice
-                pdtsData.sort( (a,b) => {
+                pdtsData.sort((a, b) => {
                     return a.actualPrice - b.actualPrice;
                 });
 
-            }else if(sortValue == 3){
+            } else if (sortValue == 3) {
 
                 //sorting descending order of actualPrice
-                pdtsData.sort( (a,b) => {
+                pdtsData.sort((a, b) => {
                     return b.actualPrice - a.actualPrice;
                 });
 
@@ -388,63 +392,63 @@ const loadProductOverview = async (req, res, next) => {
         } else {
             currPrice = pdtData.price - parseInt(pdtData.discountPrice);
         }
-        
 
-        const discountPercentage = Math.floor( 100 - ( (currPrice*100) / pdtData.price ) )
 
-        res.render('productOverview',{
-            pdtData, parentPage : 'Shop', 
-            page: 'Product Overview',isLoggedIn, 
-            isPdtAWish, isPdtExistInCart, 
+        const discountPercentage = Math.floor(100 - ((currPrice * 100) / pdtData.price))
+
+        res.render('productOverview', {
+            pdtData, parentPage: 'Shop',
+            page: 'Product Overview', isLoggedIn,
+            isPdtAWish, isPdtExistInCart,
             isUserReviewed, currPrice, discountPercentage
         });
 
 
     } catch (error) {
-                next(error);
+        next(error);
     }
 }
 
-const loadAddReview = async(req, res, next) => {
+const loadAddReview = async (req, res, next) => {
     try {
         const { productId } = req.params
         const { userId } = req.session
         let isPdtPurchased = false
         const isLoggedIn = Boolean(req.session.userId)
         const orderData = await Orders.findOne({ userId, 'products.productId': productId })
-        if(orderData) isPdtPurchased = true
+        if (orderData) isPdtPurchased = true
 
-        res.render('addReview',{page:'Reviews', parentPage:'Shop',isPdtPurchased, productId, userId, isLoggedIn})
+        res.render('addReview', { page: 'Reviews', parentPage: 'Shop', isPdtPurchased, productId, userId, isLoggedIn })
     } catch (error) {
         next(error)
     }
 }
 
-const postAddReview = async(req, res, next) => {
+const postAddReview = async (req, res, next) => {
     try {
         const { productId } = req.params
         const { userId } = req.session
         const { rating, title, description } = req.body
 
         await Products.updateOne(
-            {_id:productId},
+            { _id: productId },
             {
-                $push:{
-                    reviews:{
+                $push: {
+                    reviews: {
                         userId, title, rating, description, createdAt: new Date()
                     }
                 }
             }
         );
 
-        const pdtData = await Products.findById({_id:productId})
+        const pdtData = await Products.findById({ _id: productId })
         const totalRating = pdtData.reviews.reduce((sum, review) => sum += review.rating, 0)
-        const avgRating = Math.floor(totalRating/pdtData.reviews.length)
+        const avgRating = Math.floor(totalRating / pdtData.reviews.length)
 
         await Products.updateOne(
-            {_id:productId},
+            { _id: productId },
             {
-                $set:{
+                $set: {
                     totalRating: avgRating
                 }
             }
@@ -456,58 +460,58 @@ const postAddReview = async(req, res, next) => {
     }
 }
 
-const loadEditReview = async(req, res, next) => {
+const loadEditReview = async (req, res, next) => {
     try {
         const { productId } = req.params
         const { userId } = req.session;
         const isLoggedIn = Boolean(userId)
         const pdtData = await Products.findOne(
             {
-                _id:productId,
-                reviews:{
+                _id: productId,
+                reviews: {
                     $elemMatch: { userId }
                 }
             }
         ).populate('reviews.userId');
 
         const reviewData = pdtData.reviews.find((review) => review.userId._id == userId)
-        res.render('editReview',{ reviewData, productId, isLoggedIn, page:'Edit Review', parentPage: 'Shop' })
+        res.render('editReview', { reviewData, productId, isLoggedIn, page: 'Edit Review', parentPage: 'Shop' })
     } catch (error) {
         next(error)
     }
 }
 
-const postEditReview = async(req, res, next) => {
+const postEditReview = async (req, res, next) => {
     try {
 
         const { productId } = req.params
-        const { reviewId }  = req.query
+        const { reviewId } = req.query
         const { rating, title, description } = req.body
 
         await Products.updateOne(
-            {_id:productId, 'reviews._id': reviewId },
+            { _id: productId, 'reviews._id': reviewId },
             {
-                $set:{
-                    'reviews.$.rating' : rating,
-                    'reviews.$.title' : title,
-                    'reviews.$.description' : description
+                $set: {
+                    'reviews.$.rating': rating,
+                    'reviews.$.title': title,
+                    'reviews.$.description': description
                 }
             }
         );
-        
-        const pdtData = await Products.findById({_id:productId})
+
+        const pdtData = await Products.findById({ _id: productId })
         const totalRating = pdtData.reviews.reduce((sum, review) => sum += review.rating, 0)
-        const avgRating = Math.floor(totalRating/pdtData.reviews.length)
+        const avgRating = Math.floor(totalRating / pdtData.reviews.length)
 
         await Products.updateOne(
-            {_id:productId},
+            { _id: productId },
             {
-                $set:{
+                $set: {
                     totalRating: avgRating
                 }
             }
         );
-        
+
         res.redirect(`/shop/productOverview/${productId}`)
     } catch (error) {
         next(error)
@@ -515,13 +519,13 @@ const postEditReview = async(req, res, next) => {
 }
 
 
-const loadAllReviews = async(req, res, next) => {
+const loadAllReviews = async (req, res, next) => {
     try {
         const { productId } = req.params
         const { userId } = req.session
         const isLoggedIn = Boolean(userId)
-        const pdtData = await Products.findById({_id: productId})
-        res.render('showReviews',{pdtData, userId, page:'Reviews', parentPage:'Shop', isLoggedIn})
+        const pdtData = await Products.findById({ _id: productId })
+        res.render('showReviews', { pdtData, userId, page: 'Reviews', parentPage: 'Shop', isLoggedIn })
     } catch (error) {
         next(error)
     }
@@ -542,11 +546,11 @@ const applyProductOffer = async (req, res, next) => {
         }
 
         // Ensure discountPrice is defined, set it to 0 if it's undefined
-        
-        
+
+
         console.log('Offer Data:', offerData);
         console.log('Product Price:', product.price);
-console.log('Product Discount Price:', product.discountPrice);
+        console.log('Product Discount Price:', product.discountPrice);
 
         const actualPrice = product.price - (product.discountPrice || 0);
         console.log('Actual Price:', actualPrice);
@@ -577,17 +581,17 @@ console.log('Product Discount Price:', product.discountPrice);
 };
 
 
-const removeProductOffer = async(req, res, next) => {
+const removeProductOffer = async (req, res, next) => {
     try {
         const { productId } = req.params
         await Products.findByIdAndUpdate(
-            {_id: productId},
+            { _id: productId },
             {
-                $unset:{
-                    offer:'',
+                $unset: {
+                    offer: '',
                     offerType: '',
-                    offerPrice:'',
-                    offerAppliedBy:''
+                    offerPrice: '',
+                    offerAppliedBy: ''
                 }
             }
         );
@@ -597,7 +601,7 @@ const removeProductOffer = async(req, res, next) => {
     } catch (error) {
         next(error)
     }
-} 
+}
 
 
 

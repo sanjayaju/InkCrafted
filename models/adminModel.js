@@ -12,29 +12,29 @@ const adminSchema = new mongoose.Schema({
     }
 });
 
-adminSchema.pre('save', async function (next) {
-    // Hash the password before saving
-    const admin = this;
+// adminSchema.pre('save', async function (next) {
+//     // Hash the password before saving
+//     const admin = this;
 
-    try {
-        console.log('Before save:', admin);
-        if (!admin.isModified('password')) {
-            console.log('Password not modified, skipping hashing.');
-            return next();
-        }
+//     try {
+//         console.log('Before save:', admin);
+//         if (!admin.isModified('password')) {
+//             console.log('Password not modified, skipping hashing.');
+//             return next();
+//         }
 
-        const saltRounds = 10;
-        console.log('Password before hashing:', admin.password);
-        const hashedPassword = await bcryptjs.hash(admin.password, saltRounds);
-        console.log('Password after hashing:', hashedPassword);
-        admin.password = hashedPassword;
+//         const saltRounds = 10;
+//         console.log('Password before hashing:', admin.password);
+//         const hashedPassword = await bcryptjs.hash(admin.password, saltRounds);
+//         console.log('Password after hashing:', hashedPassword);
+//         admin.password = hashedPassword;
 
-        console.log('After save:', admin);
-        return next();
-    } catch (error) {
-        console.error('Error during save:', error);
-        return next(error);
-    }
-});
+//         console.log('After save:', admin);
+//         return next();
+//     } catch (error) {
+//         console.error('Error during save:', error);
+//         return next(error);
+//     }
+// });
 
 module.exports = mongoose.model('Admin', adminSchema);

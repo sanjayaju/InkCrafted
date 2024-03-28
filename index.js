@@ -4,7 +4,7 @@ const path = require('path');
 const express = require('express');
 const nocache = require('nocache');
 const session = require('express-session');
-const MongoDBStore = require('connect-mongodb-session')(session);
+// const MongoDBStore = require('connect-mongodb-session')(session);
 const { connectdb, secretKey } = require('./config/config');
 require('dotenv').config();
 const { err404, err500 } = require('./middleware/errorHandler');
@@ -12,14 +12,14 @@ const { err404, err500 } = require('./middleware/errorHandler');
 const app = express();
 connectdb();
 
-const store = new MongoDBStore({
-    uri: process.env.mongodb_uri,
-    collection: 'sessions' // Collection name to store sessions in MongoDB
-});
+// const store = new MongoDBStore({
+//     uri: process.env.mongodb_uri,
+//     collection: 'sessions' // Collection name to store sessions in MongoDB
+// });
 
-store.on('error', function(error) {
-    console.log(error);
-});
+// store.on('error', function(error) {
+//     console.log(error);
+// });
 
 app.set('views', './views');
 app.set('view engine', 'ejs');
@@ -29,7 +29,7 @@ app.use(session({
     secret: secretKey,
     resave: false,
     saveUninitialized: true,
-    store: store, // Use MongoDB session store
+    // store: store, // Use MongoDB session store
     cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 

@@ -63,6 +63,8 @@ admin_route.get('/approveReturnSinglePrdt/:orderId/:pdtId',orderCtrl.approveRetu
 
 admin_route.get('/banners',bannerCtrl.loadBannerList) 
 admin_route.post('/addBanner',upload.single('bannerImage'),bannerCtrl.addBanner)
+admin_route.post('/updateBanner/:bannerId',upload.single('bannerImage'),bannerCtrl.UpdateBanner)
+admin_route.post('/deleteBanner/:bannerId',bannerCtrl.deleteBanner)
 
 admin_route.get('/offers',offerCtrl.loadOffer)
 admin_route.get('/offers/addOffer',offerCtrl.loadAddOffer)

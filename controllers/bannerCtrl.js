@@ -8,7 +8,7 @@ const loadBannerList = async (req, res, next) => {
         const bannerLimit = 3;
         const banners = await Banners.aggregate([
             { $sample: { size: bannerLimit } }
-        ]).toArray();
+        ]);
 
         res.render('banner', { page: 'Banners', banners, bannerLimit });
     } catch (error) {

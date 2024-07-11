@@ -27,7 +27,6 @@
 
                 <thead>
                   <tr>
-                    <th class="text-uppercase text-secondary text-xxs text-center font-weight-bolder opacity-7">Image</th>
                     <th class="text-uppercase text-secondary text-xxs text-center font-weight-bolder opacity-7">Name</th>
                     <th class="text-uppercase text-secondary text-xxs text-center font-weight-bolder opacity-7 ps-2">Edit</th>
                     <th class="text-uppercase text-secondary text-xxs text-center font-weight-bolder opacity-7 ps-2">Unlist</th>
@@ -40,9 +39,6 @@
                       for(let i=0; i<categories.length; i++){ %>
                           <tr>
                               <!-- Display the category information for admin view -->
-                              <td class="align-middle text-center text-sm">
-                                  <img style="width: 5rem;" src="/images/categoryImages/<%= categories[i].image %>" alt="Category Image">
-                              </td>
                               <td class="align-middle text-center text-sm">
                                   <p class="text-xs font-weight-bold mb-0"><%= categories[i].name %></p>
                               </td>
@@ -58,12 +54,8 @@
                                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                          <form action="/admin/categories/edit" method="post" enctype="multipart/form-data">
+                                          <form action="/admin/categories/edit" method="post">
                                             <input id="catID" value="" type="hidden" name="categoryId">
-                                            <div>
-                                              <img height="300px" width="300px" src="" id="catImgPreview" alt="Category image preview">
-                                            </div>
-                                            <input type="file" class="input-group mb-2" name="categoryImage" id="categoryImage" single accept="image/*">
                                             <input id="catName" class="input-group" type="text" name="categoryName" placeholder="Enter new name">
                                             <div class="modal-footer">
                                               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -127,46 +119,6 @@
                                 <!-- <a href="#applyOfferModal" class="btn btn-danger applyOfferModal"  data-bs-toggle="modal" data-id="<%=// categories[i]._id %>">Apply</a> -->
                               </td>
 
-                              <!--OFFER Modal -->
-                              <div class="modal fade" id="offerModal" tabindex="-1"
-                              aria-labelledby="exampleModalLabel" aria-hidden="true">
-                              <div class="modal-dialog">
-                                  <div class="modal-content">
-                                      <div class="modal-header">
-                                          <h5 class="modal-title" id="exampleModalLabel">ADD OFFER</h5>
-                                          <button type="button" class="btn-close"
-                                              data-bs-dismiss="modal"
-                                              aria-label="Close"></button>
-                                      </div>
-                                      <form action="/admin/applyOfferToCategory" method="post">
-                                          <div class="modal-body">
-                                              <input type="hidden" name="categoryId" value="" id="offerCategoryId">
-                                              <label for="offer">Select an offer to apply: </label>
-                                              <select name="offerId" id="offer" class="form-control">
-                                                  <% 
-                                                  offerData.forEach((offer) => {
-                                                    %>
-                                                    <option value="<%= offer._id  %>"> <%= offer.name %> </option>
-                                                    <%  
-                                                  })
-                                                  %>
-                                              </select>
-
-                                              <input type="checkbox" name="override" class="my-1" value="Override Product Offers">
-                                              <small class="my-1">Override Product Offers</small>
-
-                                          </div>
-                                          <div class="modal-footer">
-                                              <button type="button" class="btn btn-secondary"
-                                                  data-bs-dismiss="modal">Close</button>
-                                              <button type="submit"
-                                                  class="btn btn-primary">ADD</button>
-                                          </div>
-                                      </form>
-                                  </div>
-                              </div>
-                          </div>
-
                           </tr>
                       <% }
                   } %>
@@ -214,31 +166,6 @@
   }
 
   // Rest of your scripts
-</script>
-
-<!-- Cropper Script  -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.11/cropper.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
-
-<script>
-  $(document).on("click", ".popupBTN", function () {
-    var cId = $(this).data('id');
-    var cVal = $(this).data('val');
-    $(".modal-body #catID").val(cId);
-    $(".modal-body #catName").val(cVal);
-  });
-
-  $('.unlistModalBTN').click(function () {
-    var catId = $(this).data('id');
-    var routeURL = '/admin/categories/list/' + catId
-    $(".modal-footer #confirmUnlistBTN").attr('href', routeURL);
-  });
-  $('.offerBTN').click( function () {
-      let catId = $(this).data('id');
-      $('#offerCategoryId').val(catId)
-    })
-
 </script>
 
 <%- include('../partials/adminScript.ejs') %>

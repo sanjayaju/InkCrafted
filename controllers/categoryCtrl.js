@@ -1,24 +1,23 @@
 const Categories = require('../models/categoryModel');
 const Products = require('../models/productModel');
-const Offers = require('../models/offerModel')
+const Offers = require('../models/offerModel');
 
-const loadCategories = async(req, res, next) => {
+const loadCategories = async (req, res, next) => {
     try {
-        const categories = await Categories.find({}).populate('offer')
+        const categories = await Categories.find({}).populate('offer');
         const offerData = await Offers.find({ $or: [
-            {status : 'Starting Soon'},
-            {status : 'Available' }
+            { status: 'Starting Soon' },
+            { status: 'Available' }
         ]});
-        res.render('categories',{categories, page:'Categories', offerData})
+        res.render('categories', { categories, page: 'Categories', offerData });
     } catch (error) {
         next(error);
     }
-}
+};
 
 const addCategory = async (req, res, next) => {
     try {
         const categoryName = req.body.categoryName.toUpperCase();
-        const categoryImage = req.file;
 
         // Client-side validation
         if (!validateCategoryName(categoryName)) {
@@ -31,30 +30,21 @@ const addCategory = async (req, res, next) => {
         if (isExistCategory) {
             console.log('Category Already Exists');
             return res.redirect('/admin/categories');
-        } else {
-            // Assuming req.file is the uploaded category image
-            if (!categoryImage) {
-                console.log('Please upload an image for the category');
-                return res.redirect('/admin/categories');
-            }
-
-            const image = categoryImage.filename;
-
-            await new Categories({ name: categoryName, image }).save();
-            console.log('Category added successfully');
-            return res.redirect('/admin/categories');
         }
+
+        await new Categories({ name: categoryName }).save();
+        console.log('Category added successfully');
+        return res.redirect('/admin/categories');
     } catch (error) {
         next(error);
     }
-}
+};
 
 // Client-side validation function
 function validateCategoryName(categoryName) {
     const trimmedName = categoryName.trim();
 
     if (trimmedName.length === 0) {
-        // You can customize error messages or logging here
         console.log('Enter a valid Category Name');
         return false;
     }
@@ -62,31 +52,23 @@ function validateCategoryName(categoryName) {
     return true;
 }
 
-
 const editCategory = async (req, res, next) => {
     try {
         console.log('on edit category controller its working!');
-        const id = req.body.categoryId
-        const newName = req.body.categoryName.toUpperCase()
+        const id = req.body.categoryId;
+        const newName = req.body.categoryName.toUpperCase();
 
-        const isCategoryExist = await Categories.findOne({ name: newName })
+        const isCategoryExist = await Categories.findOne({ name: newName });
 
-        if (req.file) {
-            const image = req.file.filename
-            if (!isCategoryExist || isCategoryExist._id == id) {
-                await Categories.findByIdAndUpdate({ _id: id }, { $set: { name: newName, image: image } })
-            }
-        } else {
-            if (!isCategoryExist) {
-                await Categories.findByIdAndUpdate({ _id: id }, { $set: { name: newName } })
-            }
+        if (!isCategoryExist || isCategoryExist._id == id) {
+            await Categories.findByIdAndUpdate({ _id: id }, { $set: { name: newName } });
         }
 
-        res.redirect('/admin/categories')
+        res.redirect('/admin/categories');
     } catch (error) {
         next(error);
     }
-}
+};
 
 const listCategory = async (req, res, next) => {
     try {
@@ -105,11 +87,11 @@ const listCategory = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-}
+};
 
 module.exports = {
     loadCategories,
     addCategory,
     editCategory,
     listCategory
-}
+};
